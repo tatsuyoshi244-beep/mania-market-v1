@@ -1,0 +1,9 @@
+
+> mania-market-v1@1.0.0 dev
+> next dev --port 3000
+
+▲ Next.js 16.2.9 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.2.28:3000
+✓ Ready in 1489ms
+

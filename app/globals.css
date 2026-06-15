@@ -1,0 +1,87 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  background: #f8f5ef;
+  color: #172026;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+body {
+  min-height: 100vh;
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-feature-settings: "palt";
+}
+
+.lp-mesh {
+  background:
+    radial-gradient(ellipse 80% 60% at 10% 20%, rgba(49, 92, 104, 0.14), transparent 55%),
+    radial-gradient(ellipse 70% 50% at 90% 10%, rgba(185, 80, 50, 0.1), transparent 50%),
+    radial-gradient(ellipse 60% 40% at 50% 100%, rgba(82, 99, 72, 0.12), transparent 55%);
+}
+
+html.dark .lp-mesh {
+  background:
+    radial-gradient(ellipse 80% 60% at 10% 20%, rgba(49, 92, 104, 0.28), transparent 55%),
+    radial-gradient(ellipse 70% 50% at 90% 10%, rgba(185, 80, 50, 0.18), transparent 50%),
+    radial-gradient(ellipse 60% 40% at 50% 100%, rgba(82, 99, 72, 0.2), transparent 55%);
+}
+
+.lp-grid {
+  background-image:
+    linear-gradient(rgba(23, 32, 38, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(23, 32, 38, 0.04) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+html.dark .lp-grid {
+  background-image:
+    linear-gradient(rgba(248, 245, 239, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(248, 245, 239, 0.04) 1px, transparent 1px);
+}
+
+.glass-panel {
+  @apply border border-white/40 bg-white/70 backdrop-blur-xl dark:border-paper/10 dark:bg-ink/50;
+}
+
+.shop-card-shine {
+  position: relative;
+  overflow: hidden;
+}
+
+.shop-card-shine::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, transparent 30%, rgba(255, 255, 255, 0.12) 50%, transparent 70%);
+  transform: translateX(-100%);
+  transition: transform 0.6s ease;
+  pointer-events: none;
+}
+
+.group:hover .shop-card-shine::after {
+  transform: translateX(100%);
+}
+
+a {
+  text-underline-offset: 4px;
+}
+
+input,
+textarea,
+select {
+  outline: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
