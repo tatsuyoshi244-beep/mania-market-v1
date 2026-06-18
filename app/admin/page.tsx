@@ -41,6 +41,13 @@ export default async function AdminPage() {
           出店申請管理
           <p className="mt-2 text-sm font-normal text-ink/65">審査・承認・公開</p>
         </Link>
+        <Link
+          href="/admin/audit-logs"
+          className="rounded-xl border border-lagoon/25 bg-lagoon/8 p-5 font-bold shadow-sm transition hover:border-lagoon"
+        >
+          監査ログ
+          <p className="mt-2 text-sm font-normal text-ink/65">重要操作の記録</p>
+        </Link>
       </div>
       <div className="mt-8 grid gap-6 lg:grid-cols-3">
         <AdminList title="ショップ" rows={(shops ?? []).map((shop) => `${shop.name} / ${shop.is_published ? "公開" : "非公開"}`)} />

@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database";
-import { requireEnv } from "@/lib/supabase/server";
+import { requireEnv } from "@/lib/env";
 
 /** 未ログイン向けの公開読み取りクライアント（セッション非保持） */
 export function createSupabasePublicClient() {

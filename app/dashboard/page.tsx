@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { AuthCard } from "@/components/auth-card";
+import { ProductLimitBanner } from "@/components/dashboard/product-limit-banner";
 import { PlanCards } from "@/components/plan-cards";
 import { saveShop, signOut } from "@/app/actions";
 import { listCategories } from "@/lib/categories";
+import { getProductLimitInfo } from "@/lib/products";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export default async function DashboardPage() {
@@ -10,10 +12,11 @@ export default async function DashboardPage() {
   const { data: userData } = await supabase.auth.getUser();
   if (!userData.user) return <div className="px-4 py-10"><AuthCard next="/dashboard" title="出店ダッシュボード" description="ログインしてショップ管理を開始してください。" /></div>;
 
-  const [{ data: user }, { data: shop }, categories] = await Promise.all([
+  const [{ data: user }, { data: shop }, categories, limitInfo] = await Promise.all([
     supabase.from("users").select("plan_key").eq("id", userData.user.id).single(),
     supabase.from("shops").select("*").eq("owner_id", userData.user.id).maybeSingle(),
-    listCategories(supabase)
+    listCategories(supabase),
+    getProductLimitInfo(supabase, userData.user.id)
   ]);
 
   const { data: shopCategoryRows } = shop?.id
@@ -44,6 +47,12 @@ export default async function DashboardPage() {
           商品管理
         </Link>
       </div>
+
+      {shop ? (
+        <div className="mt-8">
+          <ProductLimitBanner limitInfo={limitInfo} />
+        </div>
+      ) : null}
 
       <div className="mt-8">
         <PlanCards currentPlan={user?.plan_key} />

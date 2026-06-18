@@ -1,4 +1,6 @@
 import type { PostgrestError } from "@supabase/supabase-js";
+import { isDevelopment } from "@/lib/env";
+import { logServerError } from "@/lib/security/safe-log";
 
 export type QueryResult<T> = {
   data: T;
@@ -7,11 +9,18 @@ export type QueryResult<T> = {
 };
 
 export function formatSupabaseError(error: unknown): string {
-  return JSON.stringify(error, null, 2);
+  if (isDevelopment()) {
+    return JSON.stringify(error, null, 2);
+  }
+  if (error && typeof error === "object" && "code" in error && "message" in error) {
+    const record = error as { code?: string; message?: string };
+    return `${record.code ?? "error"}: ${record.message ?? "unknown"}`;
+  }
+  return "supabase error";
 }
 
 export function logSupabaseError(source: string, error: unknown) {
-  console.error(`[Supabase:${source}]`, formatSupabaseError(error));
+  logServerError(`Supabase:${source}`, error);
 }
 
 export function queryFailure<T>(source: string, error: unknown, fallback: T): QueryResult<T> {

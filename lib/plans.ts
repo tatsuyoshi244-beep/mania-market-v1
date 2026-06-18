@@ -25,7 +25,7 @@ export const PLANS: Record<PlanKey, Plan> = {
   premium: {
     key: "premium",
     name: "プレミアム",
-    monthlyPrice: 4980,
+    monthlyPrice: 2980,
     productLimit: null,
     stripePriceEnv: "STRIPE_PREMIUM_PRICE_ID"
   }

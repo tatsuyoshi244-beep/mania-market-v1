@@ -33,6 +33,7 @@ export function isPlanKey(value: string | null | undefined): value is PlanKey {
 export type ProductLimitInfo = {
   planKey: PlanKey;
   limit: number | null;
-  activeCount: number;
+  productCount: number;
+  remaining: number | null;
   canCreate: boolean;
 };

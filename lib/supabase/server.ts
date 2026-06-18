@@ -1,8 +1,11 @@
+import "server-only";
+
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
 import type { CookieOptions } from "@supabase/ssr";
 import type { Database } from "@/types/database";
+import { requireEnv } from "@/lib/env";
 
 export async function createSupabaseServerClient() {
   const cookieStore = await cookies();
@@ -38,10 +41,4 @@ export function createSupabaseServiceClient() {
   );
 }
 
-export function requireEnv(name: string) {
-  const value = process.env[name];
-  if (!value) {
-    throw new Error(`Missing environment variable: ${name}`);
-  }
-  return value;
-}
+export { requireEnv } from "@/lib/env";

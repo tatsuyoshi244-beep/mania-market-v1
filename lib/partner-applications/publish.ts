@@ -1,6 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database";
 import { upsertSellerRolePreservingAdmin } from "@/lib/auth";
+import { toUserFacingError } from "@/lib/security/safe-error";
+import { logServerError } from "@/lib/security/safe-log";
 import { ensureUniqueShopSlug, slugifyShopName } from "@/lib/partner-applications/slug";
 
 type ServiceClient = SupabaseClient<Database>;
@@ -30,7 +32,7 @@ export async function publishPartnerApplicationShop(
   });
 
   if (ownerError) {
-    console.error("[publishPartnerApplicationShop] user_id_by_email", ownerError);
+    logServerError("publishPartnerApplicationShop:user_id_by_email", ownerError);
   }
 
   const baseSlug = slugifyShopName(application.shop_name);
@@ -55,13 +57,8 @@ export async function publishPartnerApplicationShop(
   const { data: shop, error: shopError } = await service.from("shops").insert(shopPayload).select("id,slug").single();
 
   if (shopError || !shop) {
-    console.error("[publishPartnerApplicationShop] insert shop", shopError);
-    if (shopError) {
-      throw new Error(
-        `ショップ作成失敗: ${shopError.code} ${shopError.message} ${shopError.details ?? ""} ${shopError.hint ?? ""}`
-      );
-    }
-    throw new Error("ショップの作成に失敗しました。");
+    logServerError("publishPartnerApplicationShop:insert_shop", shopError);
+    throw new Error(toUserFacingError(shopError ?? new Error("ショップの作成に失敗しました。")));
   }
 
   if (application.categories.length > 0) {
@@ -75,7 +72,7 @@ export async function publishPartnerApplicationShop(
         categoryIds.map((category_id) => ({ shop_id: shop.id, category_id }))
       );
       if (catError) {
-        console.error("[publishPartnerApplicationShop] shop_categories", catError);
+        logServerError("publishPartnerApplicationShop:shop_categories", catError);
       }
     }
   }

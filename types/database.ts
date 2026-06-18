@@ -183,6 +183,7 @@ export type Database = {
           price_label: string | null;
           external_url: string;
           image_url: string | null;
+          category_id: string | null;
           status: ProductStatus;
           created_at: string;
           updated_at: string;
@@ -424,6 +425,46 @@ export type Database = {
         Update: Partial<Database["public"]["Tables"]["partner_applications"]["Insert"]>;
         Relationships: [];
       };
+      audit_logs: {
+        Row: {
+          id: string;
+          user_id: string | null;
+          action: string;
+          target_type: string;
+          target_id: string | null;
+          metadata: Json;
+          ip_hash: string | null;
+          user_agent_hash: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id?: string | null;
+          action: string;
+          target_type: string;
+          target_id?: string | null;
+          metadata?: Json;
+          ip_hash?: string | null;
+          user_agent_hash?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["audit_logs"]["Insert"]>;
+        Relationships: [];
+      };
+      rate_limit_events: {
+        Row: {
+          id: string;
+          bucket_key: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          bucket_key: string;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["rate_limit_events"]["Insert"]>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -446,6 +487,10 @@ export type Database = {
       admin_assign_shop_owner: {
         Args: { target_shop_id: string; target_user_id: string };
         Returns: string;
+      };
+      consume_rate_limit: {
+        Args: { p_bucket_key: string; p_max_count: number; p_window_seconds: number };
+        Returns: boolean;
       };
     };
     Enums: {
