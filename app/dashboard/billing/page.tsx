@@ -1,79 +1,63 @@
-import Link from "next/link";
-import { AuthCard } from "@/components/auth-card";
 import { BillingPlanCards } from "@/components/billing/billing-plan-cards";
 import { BillingPortalButton } from "@/components/billing/portal-button";
-import { BillingSummaryCard } from "@/components/billing/billing-summary";
+import { DashboardShell } from "@/components/dashboard/dashboard-shell";
+import { PLANS } from "@/lib/plans";
 import { getBillingSummary } from "@/lib/billing/queries";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { requireDashboardAccess } from "@/lib/dashboard/access";
 
-export const metadata = {
-  title: "プラン・請求 — Mania Market"
-};
+export const metadata = { title: "プラン管理 — Mania Market" };
 
 type BillingPageProps = {
   searchParams: Promise<{ success?: string; canceled?: string; error?: string }>;
 };
 
 export default async function BillingPage({ searchParams }: BillingPageProps) {
-  const supabase = await createSupabaseServerClient();
-  const { data: userData } = await supabase.auth.getUser();
-  if (!userData.user) {
-    return (
-      <div className="px-4 py-10">
-        <AuthCard next="/dashboard/billing" />
-      </div>
-    );
-  }
-
-  const summary = await getBillingSummary(supabase, userData.user.id);
+  const access = await requireDashboardAccess("/dashboard/billing");
+  const summary = await getBillingSummary(access.supabase, access.userId);
   const params = await searchParams;
+  const limitLabel = summary.limitInfo.limit === null ? "無制限" : `${summary.limitInfo.limit}件`;
+  const remainingLabel = summary.limitInfo.remaining === null ? "無制限" : `${summary.limitInfo.remaining}件`;
 
   return (
-    <section className="mx-auto max-w-6xl px-4 py-10">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-4xl font-black">プラン・請求</h1>
-          <p className="mt-2 text-ink/65">サブスクリプションの確認とプラン変更</p>
-        </div>
-        <Link href="/dashboard" className="text-sm font-semibold text-lagoon hover:text-cinnabar">
-          ← ダッシュボード
-        </Link>
-      </div>
-
+    <DashboardShell title="プラン管理" description="現在のプラン確認とアップグレード" email={access.email} mode={access.mode} shopName={access.shop?.name ?? null}>
       {params.success ? (
-        <p className="mt-6 rounded-xl border border-moss/30 bg-moss/10 px-4 py-3 text-sm font-semibold text-moss">
+        <p className="rounded-xl border border-moss/30 bg-moss/10 px-4 py-3 text-sm font-semibold text-moss">
           お支払い手続きが完了しました。反映まで数秒かかる場合があります。
         </p>
       ) : null}
       {params.canceled ? (
-        <p className="mt-6 rounded-xl border border-ink/15 bg-paper/80 px-4 py-3 text-sm text-ink/70">
-          お支払い手続きはキャンセルされました。
-        </p>
+        <p className="mt-4 rounded-xl border border-ink/15 bg-paper/80 px-4 py-3 text-sm text-ink/70">お支払い手続きはキャンセルされました。</p>
       ) : null}
       {params.error ? (
-        <p className="mt-6 rounded-xl border border-cinnabar/30 bg-cinnabar/8 px-4 py-3 text-sm text-cinnabar">
-          {decodeURIComponent(params.error)}
-        </p>
+        <p className="mt-4 rounded-xl border border-cinnabar/30 bg-cinnabar/8 px-4 py-3 text-sm text-cinnabar">{decodeURIComponent(params.error)}</p>
       ) : null}
 
-      <div className="mt-8">
-        <BillingSummaryCard summary={summary} />
-      </div>
+      <section className="rounded-2xl border border-ink/10 bg-white/90 p-6 shadow-sm dark:bg-ink/50">
+        <h2 className="text-xl font-black">現在のプラン</h2>
+        <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div><p className="text-xs text-ink/50">プラン</p><p className="text-2xl font-black">{summary.planName}</p><p className="text-sm text-ink/60">{PLANS[summary.planKey].monthlyPrice === 0 ? "無料" : `月額 ${PLANS[summary.planKey].monthlyPrice}円`}</p></div>
+          <div><p className="text-xs text-ink/50">利用数</p><p className="text-lg font-bold">{summary.limitInfo.productCount}件</p></div>
+          <div><p className="text-xs text-ink/50">上限</p><p className="text-lg font-bold">{limitLabel}</p></div>
+          <div><p className="text-xs text-ink/50">残り登録可能数</p><p className="text-lg font-bold">{remainingLabel}</p></div>
+        </div>
+        {!summary.limitInfo.canCreate ? (
+          <p className="mt-5 rounded-lg border border-cinnabar/25 bg-cinnabar/8 px-4 py-3 text-sm font-semibold text-cinnabar">
+            現在のプランの上限に達しました。上位プランへのアップグレードをご検討ください。
+          </p>
+        ) : null}
+      </section>
 
       <div className="mt-8 flex flex-wrap items-center gap-4">
         {summary.stripeCustomerId ? <BillingPortalButton /> : null}
-        <p className="text-xs text-ink/50">テストカード: 4242 4242 4242 4242（本番前確認用）</p>
+        <p className="text-xs text-ink/50">テストカード: 4242 4242 4242 4242</p>
       </div>
 
       <div className="mt-10">
         <h2 className="text-2xl font-black">プラン変更</h2>
-        <p className="mt-2 text-sm text-ink/60">
-          有料プラン登録済みの場合、プラン変更・解約・支払い方法の変更は請求管理から行えます。
-        </p>
         <div className="mt-6">
           <BillingPlanCards currentPlan={summary.planKey} hasStripeCustomer={Boolean(summary.stripeCustomerId)} />
         </div>
       </div>
-    </section>
+    </DashboardShell>
   );
 }

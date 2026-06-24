@@ -17,9 +17,10 @@ export type SellerProductRow = {
 
 type ProductsTableProps = {
   products: SellerProductRow[];
+  readOnly?: boolean;
 };
 
-export function ProductsTable({ products }: ProductsTableProps) {
+export function ProductsTable({ products, readOnly = false }: ProductsTableProps) {
   if (products.length === 0) {
     return (
       <p className="rounded-xl border border-ink/10 bg-white/90 p-8 text-center text-sm text-ink/60 dark:bg-ink/60">
@@ -54,19 +55,25 @@ export function ProductsTable({ products }: ProductsTableProps) {
                 <td className="px-4 py-4">{productStatusLabel(product.status)}</td>
                 <td className="px-4 py-4 text-xs text-ink/60">{new Date(product.created_at).toLocaleString("ja-JP")}</td>
                 <td className="px-4 py-4">
-                  <div className="flex flex-wrap gap-2">
-                    <Link href={`/dashboard/products/${product.id}/edit`} className="rounded-full border border-ink/15 px-3 py-1 text-xs font-bold hover:border-cinnabar">編集</Link>
-                    <form action={updateProductStatus}>
-                      <input type="hidden" name="product_id" value={product.id} />
-                      <button type="submit" name="status" value={product.status === "active" ? "draft" : "published"} className="rounded-full border border-lagoon/25 bg-lagoon/10 px-3 py-1 text-xs font-bold text-lagoon">
-                        {product.status === "active" ? "非公開" : "公開"}
-                      </button>
-                    </form>
-                    <form action={deleteProduct}>
-                      <input type="hidden" name="product_id" value={product.id} />
-                      <button type="submit" className="rounded-full border border-cinnabar/25 bg-cinnabar/10 px-3 py-1 text-xs font-bold text-cinnabar">削除</button>
-                    </form>
-                  </div>
+                  {readOnly ? (
+                    <Link href={`/products/${product.id}`} className="rounded-full border border-ink/15 px-3 py-1 text-xs font-bold hover:border-cinnabar">
+                      公開ページ
+                    </Link>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      <Link href={`/dashboard/products/${product.id}/edit`} className="rounded-full border border-ink/15 px-3 py-1 text-xs font-bold hover:border-cinnabar">編集</Link>
+                      <form action={updateProductStatus}>
+                        <input type="hidden" name="product_id" value={product.id} />
+                        <button type="submit" name="ui_status" value={product.status === "active" ? "draft" : "published"} className="rounded-full border border-lagoon/25 bg-lagoon/10 px-3 py-1 text-xs font-bold text-lagoon">
+                          {product.status === "active" ? "非公開" : "公開"}
+                        </button>
+                      </form>
+                      <form action={deleteProduct}>
+                        <input type="hidden" name="product_id" value={product.id} />
+                        <button type="submit" className="rounded-full border border-cinnabar/25 bg-cinnabar/10 px-3 py-1 text-xs font-bold text-cinnabar">削除</button>
+                      </form>
+                    </div>
+                  )}
                 </td>
               </tr>
             );

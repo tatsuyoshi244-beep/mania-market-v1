@@ -122,6 +122,7 @@ export async function saveShop(formData: FormData) {
     cover_image_url: text(formData, "cover_image_url"),
     twitter_url: text(formData, "twitter_url"),
     instagram_url: text(formData, "instagram_url"),
+    location: text(formData, "location"),
     is_published: formData.get("is_published") === "on"
   };
 
@@ -136,8 +137,9 @@ export async function saveShop(formData: FormData) {
   await syncShopCategories(supabase, savedShopId, parseCategoryIds(formData));
 
   revalidatePath("/dashboard");
+  revalidatePath("/dashboard/shop");
   revalidatePath("/shops");
-  redirect("/dashboard");
+  redirect("/dashboard/shop");
 }
 
 function parseUiStatus(formData: FormData): ProductUiStatus {

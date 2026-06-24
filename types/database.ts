@@ -114,6 +114,7 @@ export type Database = {
           cover_image_url: string | null;
           twitter_url: string | null;
           instagram_url: string | null;
+          location: string | null;
           is_published: boolean;
           status: ShopLifecycleStatus;
           partner_application_id: string | null;
@@ -491,6 +492,21 @@ export type Database = {
       consume_rate_limit: {
         Args: { p_bucket_key: string; p_max_count: number; p_window_seconds: number };
         Returns: boolean;
+      };
+      seller_shop_stats: {
+        Args: { target_shop_id: string };
+        Returns: Array<{
+          follower_count: number;
+          shop_favorite_count: number;
+          product_favorite_count: number;
+          shop_view_count: number;
+          product_view_count: number;
+          total_view_count: number;
+        }>;
+      };
+      seller_shop_analytics: {
+        Args: { target_shop_id: string };
+        Returns: Json;
       };
     };
     Enums: {
