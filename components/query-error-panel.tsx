@@ -1,11 +1,15 @@
 import { formatSupabaseError } from "@/lib/supabase/errors";
+import { isDevelopment } from "@/lib/env";
 
 type QueryErrorPanelProps = {
   errors: Array<{ source: string; error: unknown }>;
 };
 
 export function QueryErrorPanel({ errors }: QueryErrorPanelProps) {
-  if (errors.length === 0) return null;
+  // Query details may contain internal implementation information and must
+  // never be exposed on the public production site. Keep this panel as a
+  // local-development diagnostic only.
+  if (!isDevelopment() || errors.length === 0) return null;
 
   return (
     <section className="mx-auto max-w-6xl px-4 pt-6">

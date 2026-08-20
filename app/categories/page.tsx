@@ -1,12 +1,10 @@
 import { CategoryCard } from "@/components/category-card";
 import { getCategoryShopCounts, listAllCategories } from "@/lib/queries/categories";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export default async function CategoriesPage() {
-  const supabase = await createSupabaseServerClient();
   const [categories, shopCountsResult] = await Promise.all([
-    listAllCategories(supabase),
-    getCategoryShopCounts(supabase)
+    listAllCategories(),
+    getCategoryShopCounts()
   ]);
   const shopCounts = shopCountsResult.data;
 

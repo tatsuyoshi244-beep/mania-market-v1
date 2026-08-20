@@ -5,7 +5,6 @@ import { getCategoryImageUrl } from "@/lib/category-images";
 import { getCategoryBySlug } from "@/lib/queries/categories";
 import { listProductsByCategory } from "@/lib/queries/products";
 import { listShopsByCategory } from "@/lib/queries/shops";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export default async function CategoryDetailPage({
   params
@@ -13,13 +12,12 @@ export default async function CategoryDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const supabase = await createSupabaseServerClient();
-  const category = await getCategoryBySlug(supabase, slug);
+  const category = await getCategoryBySlug(undefined, slug);
   if (!category) notFound();
 
   const [shops, products] = await Promise.all([
-    listShopsByCategory(supabase, category.id),
-    listProductsByCategory(supabase, category.id)
+    listShopsByCategory(undefined, category.id),
+    listProductsByCategory(undefined, category.id)
   ]);
 
   const imageUrl = getCategoryImageUrl(slug);

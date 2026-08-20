@@ -3,26 +3,23 @@ import { notFound } from "next/navigation";
 import { ProductCard } from "@/components/product-card";
 import { FavoriteShopButton } from "@/components/favorite-shop-button";
 import { FollowShopButton } from "@/components/follow-shop-button";
-import { recordAnalyticsEvent } from "@/lib/analytics";
 import { listProductsByShop } from "@/lib/queries/products";
 import { getShopBySlug } from "@/lib/queries/shops";
-import { getUserSocialState } from "@/lib/queries/social";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { asRelatedList } from "@/lib/utils";
 
 export default async function ShopDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const supabase = await createSupabaseServerClient();
-  const shop = await getShopBySlug(supabase, slug);
+  const shop = await getShopBySlug(undefined, slug);
   if (!shop) notFound();
 
-  const { data: userData } = await supabase.auth.getUser();
-  const social = await getUserSocialState(supabase, userData.user?.id);
+  const social = {
+    favoriteShopIds: new Set<string>(),
+    followingShopIds: new Set<string>(),
+    favoriteProductIds: new Set<string>()
+  };
   const returnTo = `/shops/${slug}`;
 
-  await recordAnalyticsEvent({ type: "shop_view", shopId: shop.id, userId: userData.user?.id });
-
-  const products = await listProductsByShop(supabase, shop.id);
+  const products = await listProductsByShop(undefined, shop.id);
   const categoryNames = asRelatedList(shop.shop_categories)
     .map((row) => row.categories?.name)
     .filter(Boolean);

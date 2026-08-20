@@ -2,28 +2,16 @@ import { ExternalLink, Instagram, Store } from "lucide-react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { FavoriteProductButton } from "@/components/favorite-product-button";
-import { recordAnalyticsEvent } from "@/lib/analytics";
 import { getProductById } from "@/lib/queries/products";
-import { getUserSocialState } from "@/lib/queries/social";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { asRelatedList } from "@/lib/utils";
 
 export default async function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const supabase = await createSupabaseServerClient();
-  const product = await getProductById(supabase, id);
+  const product = await getProductById(undefined, id);
   if (!product) notFound();
 
-  const { data: userData } = await supabase.auth.getUser();
-  const social = await getUserSocialState(supabase, userData.user?.id);
+  const social = { favoriteProductIds: new Set<string>() };
   const returnTo = `/products/${id}`;
-
-  await recordAnalyticsEvent({
-    type: "product_view",
-    productId: product.id,
-    shopId: product.shop_id,
-    userId: userData.user?.id
-  });
 
   const tags = asRelatedList(product.product_tags).map((row) => row.tag);
   const shop = product.shops;

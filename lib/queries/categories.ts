@@ -1,86 +1,76 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "@/types/database";
+import { queryRows, queryOne } from "@/lib/neon/db";
 import { queryFailure, querySuccess, type QueryResult } from "@/lib/supabase/errors";
 
-const categorySelect = "id,slug,name,description,sort_order";
+export type CategoryRow = {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  sort_order: number;
+};
 
-export async function listAllCategories(supabase: SupabaseClient<Database>) {
-  const { data, error } = await supabase
-    .from("categories")
-    .select(categorySelect)
-    .order("sort_order", { ascending: true });
-
-  if (error) {
-    console.error("[categories.listAllCategories]", JSON.stringify(error, null, 2));
+// Retain the first argument while route call sites move from Supabase to Neon.
+export async function listAllCategories(_legacyClient?: unknown) {
+  try {
+    return await queryRows<CategoryRow>(
+      `select id::text, slug, name, description, sort_order
+       from public.categories
+       order by sort_order asc, name asc`
+    );
+  } catch (error) {
+    console.error("[categories.listAllCategories]", error);
     return [];
   }
-  return data ?? [];
 }
 
 export async function getPopularCategories(
-  supabase: SupabaseClient<Database>,
+  _legacyClient?: unknown,
   limit = 6
-): Promise<QueryResult<Array<{ id: string; slug: string; name: string; description: string | null; sort_order: number }>>> {
+): Promise<QueryResult<CategoryRow[]>> {
   const source = "categories.getPopularCategories";
   try {
-    const { data, error } = await supabase
-      .from("categories")
-      .select(categorySelect)
-      .order("sort_order", { ascending: true })
-      .limit(limit);
-
-    if (error) return queryFailure(source, error, []);
-    return querySuccess(source, data ?? []);
+    const data = await queryRows<CategoryRow>(
+      `select id::text, slug, name, description, sort_order
+       from public.categories
+       order by sort_order asc, name asc
+       limit $1`,
+      [limit]
+    );
+    return querySuccess(source, data);
   } catch (error) {
     return queryFailure(source, error, []);
   }
 }
 
 export async function getCategoryShopCounts(
-  supabase: SupabaseClient<Database>
+  _legacyClient?: unknown
 ): Promise<QueryResult<Map<string, number>>> {
   const source = "shop_categories.getCategoryShopCounts";
   const fallback = new Map<string, number>();
   try {
-    const { data, error } = await supabase.from("shop_categories").select("category_id");
-    if (error) return queryFailure(source, error, fallback);
-
-    const counts = new Map<string, number>();
-    for (const row of data ?? []) {
-      counts.set(row.category_id, (counts.get(row.category_id) ?? 0) + 1);
-    }
-    return querySuccess(source, counts);
+    const rows = await queryRows<{ category_id: string; count: number }>(
+      `select category_id::text, count(*)::int as count
+       from public.shop_categories
+       group by category_id`
+    );
+    return querySuccess(source, new Map(rows.map((row) => [row.category_id, row.count])));
   } catch (error) {
     return queryFailure(source, error, fallback);
   }
 }
 
-export async function getCategoryBySlug(
-  supabase: SupabaseClient<Database>,
-  slug: string
-) {
-  const { data, error } = await supabase
-    .from("categories")
-    .select(categorySelect)
-    .eq("slug", slug)
-    .single();
-
-  if (error) return null;
-  return data;
+export async function getCategoryBySlug(_legacyClient: unknown, slug: string) {
+  return queryOne<CategoryRow>(
+    `select id::text, slug, name, description, sort_order
+     from public.categories where slug = $1 limit 1`,
+    [slug]
+  );
 }
 
-export async function getShopIdsForCategory(
-  supabase: SupabaseClient<Database>,
-  categoryId: string
-) {
-  const { data, error } = await supabase
-    .from("shop_categories")
-    .select("shop_id")
-    .eq("category_id", categoryId);
-
-  if (error) {
-    console.error("[shop_categories.getShopIdsForCategory]", JSON.stringify(error, null, 2));
-    return [];
-  }
-  return (data ?? []).map((row) => row.shop_id);
+export async function getShopIdsForCategory(_legacyClient: unknown, categoryId: string) {
+  const rows = await queryRows<{ shop_id: string }>(
+    `select shop_id::text from public.shop_categories where category_id = $1::uuid`,
+    [categoryId]
+  );
+  return rows.map((row) => row.shop_id);
 }

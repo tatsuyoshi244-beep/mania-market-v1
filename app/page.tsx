@@ -12,10 +12,8 @@ import { ShopScrollCard } from "@/components/shop-scroll-card";
 import { SiteFooter } from "@/components/site-footer";
 import { getCategoryShopCounts, getPopularCategories } from "@/lib/queries/categories";
 import { getDiscoverProducts } from "@/lib/queries/products";
-import { getUserSocialState } from "@/lib/queries/social";
 import { getPopularShops } from "@/lib/queries/shops";
 import { formatSupabaseError } from "@/lib/supabase/errors";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const DISCOVERY_LAYOUTS = ["tall", "square", "wide"] as const;
 
@@ -58,11 +56,8 @@ export default async function HomePage() {
   let discoverProducts: Awaited<ReturnType<typeof getDiscoverProducts>>["data"] = [];
 
   try {
-    const supabase = await createSupabaseServerClient();
-    const { data: userData } = await supabase.auth.getUser();
-
     try {
-      const result = await getPopularCategories(supabase, 6);
+      const result = await getPopularCategories(undefined, 6);
       categories = result.data;
       if (result.error) queryErrors.push({ source: result.source, error: result.error });
     } catch (error) {
@@ -70,7 +65,7 @@ export default async function HomePage() {
     }
 
     try {
-      const result = await getCategoryShopCounts(supabase);
+      const result = await getCategoryShopCounts();
       shopCounts = result.data;
       if (result.error) queryErrors.push({ source: result.source, error: result.error });
     } catch (error) {
@@ -78,7 +73,7 @@ export default async function HomePage() {
     }
 
     try {
-      const result = await getPopularShops(supabase, 12);
+      const result = await getPopularShops(undefined as never, 12);
       shops = result.data;
       if (result.error) queryErrors.push({ source: result.source, error: result.error });
     } catch (error) {
@@ -86,20 +81,15 @@ export default async function HomePage() {
     }
 
     try {
-      const result = await getDiscoverProducts(supabase, 3);
+      const result = await getDiscoverProducts(undefined as never, 3);
       discoverProducts = result.data;
       if (result.error) queryErrors.push({ source: result.source, error: result.error });
     } catch (error) {
       queryErrors.push({ source: "products.getDiscoverProducts (unexpected)", error });
     }
 
-    try {
-      await getUserSocialState(supabase, userData.user?.id);
-    } catch (error) {
-      queryErrors.push({ source: "social.getUserSocialState (unexpected)", error });
-    }
   } catch (error) {
-    queryErrors.push({ source: "createSupabaseServerClient", error });
+    queryErrors.push({ source: "home.neon", error });
     console.error("[HomePage]", formatSupabaseError(error));
   }
 
