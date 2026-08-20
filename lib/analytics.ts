@@ -1,5 +1,5 @@
-import { createSupabaseServiceClient } from "@/lib/supabase/server";
-import type { AnalyticsEventType, Json } from "@/types/database";
+import { queryRows } from "@/lib/neon/db";
+import type { AnalyticsEventType } from "@/types/database";
 
 export type { AnalyticsEventType };
 
@@ -10,12 +10,10 @@ export async function recordAnalyticsEvent(input: {
   productId?: string | null;
   metadata?: Record<string, unknown>;
 }) {
-  const supabase = createSupabaseServiceClient();
-  await supabase.from("analytics_events").insert({
-    event_type: input.type,
-    user_id: input.userId ?? null,
-    shop_id: input.shopId ?? null,
-    product_id: input.productId ?? null,
-    metadata: (input.metadata ?? {}) as Json
-  });
+  await queryRows(
+    `insert into public.analytics_events (event_type, user_id, shop_id, product_id, metadata)
+     values ($1, $2, $3, $4, $5::jsonb) returning id`,
+    [input.type, input.userId ?? null, input.shopId ?? null, input.productId ?? null,
+      JSON.stringify(input.metadata ?? {})]
+  );
 }

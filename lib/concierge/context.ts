@@ -12,8 +12,8 @@ export async function loadConciergeContext(
 ): Promise<ConciergeContext> {
   const { data: shop } = await supabase.from("shops").select("*").eq("owner_id", userId).maybeSingle();
 
-  let shopCategoryNames: string[] = [];
-  let shopCategorySlugs: string[] = [];
+  const shopCategoryNames: string[] = [];
+  const shopCategorySlugs: string[] = [];
 
   if (shop?.id) {
     const { data: shopCategories } = await supabase

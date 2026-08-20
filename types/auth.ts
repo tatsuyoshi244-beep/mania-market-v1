@@ -1,7 +1,11 @@
-import type { User as SupabaseAuthUser } from "@supabase/supabase-js";
 import type { PlanKey, User, UserRole } from "@/types/database";
 
-export type AuthUser = SupabaseAuthUser;
+export type AuthUser = {
+  id: string;
+  email: string;
+  name?: string | null;
+  image?: string | null;
+};
 
 export type AppUser = User;
 

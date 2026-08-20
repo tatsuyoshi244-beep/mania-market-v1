@@ -11,6 +11,8 @@ export function ThemeToggle() {
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
     const isDark = stored === "dark" || (!stored && prefersDark);
     document.documentElement.classList.toggle("dark", isDark);
+    // Hydrate the icon after synchronizing the DOM theme.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setDark(isDark);
   }, []);
 

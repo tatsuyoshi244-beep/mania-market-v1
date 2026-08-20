@@ -1,14 +1,13 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { getMypageCounts } from "@/lib/queries/mypage";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getAuthUser } from "@/lib/auth";
 
 export default async function MypagePage() {
-  const supabase = await createSupabaseServerClient();
-  const { data } = await supabase.auth.getUser();
-  if (!data.user) return null;
+  const user = await getAuthUser();
+  if (!user) return null;
 
-  const counts = await getMypageCounts(supabase, data.user.id);
+  const counts = await getMypageCounts(null, user.id);
 
   const cards = [
     { href: "/mypage/applications", label: "出店申請状況", count: null as number | null },

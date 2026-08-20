@@ -1,16 +1,15 @@
 import { ShopCard } from "@/components/shop-card";
 import { listFollowingShops } from "@/lib/queries/mypage";
 import { getUserSocialState } from "@/lib/queries/social";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getAuthUser } from "@/lib/auth";
 
 export default async function FollowingShopsPage() {
-  const supabase = await createSupabaseServerClient();
-  const { data } = await supabase.auth.getUser();
-  if (!data.user) return null;
+  const user = await getAuthUser();
+  if (!user) return null;
 
   const [shops, social] = await Promise.all([
-    listFollowingShops(supabase, data.user.id),
-    getUserSocialState(supabase, data.user.id)
+    listFollowingShops(null, user.id),
+    getUserSocialState(null, user.id)
   ]);
 
   return (

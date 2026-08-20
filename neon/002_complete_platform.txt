@@ -1,0 +1,3 @@
+Neon SQL Editor で 002_complete_platform.sql の全文を実行してください。
+
+001_initial_schema.sql を実行済みの環境に、会員・出店申請・課金・監査機能で必要な列とテーブルを安全に追加します。

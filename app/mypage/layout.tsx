@@ -1,13 +1,12 @@
 import { AuthCard } from "@/components/auth-card";
 import { MypageNav } from "@/components/mypage-nav";
 import { SignOutButton } from "@/components/sign-out-button";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getAuthUser } from "@/lib/auth";
 
 export default async function MypageLayout({ children }: { children: React.ReactNode }) {
-  const supabase = await createSupabaseServerClient();
-  const { data } = await supabase.auth.getUser();
+  const user = await getAuthUser();
 
-  if (!data.user) {
+  if (!user) {
     return (
       <div className="px-4 py-10">
         <AuthCard
@@ -25,7 +24,7 @@ export default async function MypageLayout({ children }: { children: React.React
         <div>
           <h1 className="text-4xl font-black">マイページ</h1>
           <p className="mt-2 text-ink/65 dark:text-paper/65">
-            {data.user.email ?? "ログイン中"} — お気に入りとフォロー中のショップを管理
+            {user.email} — お気に入りとフォロー中のショップを管理
           </p>
         </div>
         <SignOutButton />

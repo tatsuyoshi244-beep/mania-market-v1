@@ -1,13 +1,12 @@
 import { ProductCard } from "@/components/product-card";
 import { listFavoriteProducts } from "@/lib/queries/mypage";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getAuthUser } from "@/lib/auth";
 
 export default async function FavoriteProductsPage() {
-  const supabase = await createSupabaseServerClient();
-  const { data } = await supabase.auth.getUser();
-  if (!data.user) return null;
+  const user = await getAuthUser();
+  if (!user) return null;
 
-  const products = await listFavoriteProducts(supabase, data.user.id);
+  const products = await listFavoriteProducts(null, user.id);
 
   return (
     <div>

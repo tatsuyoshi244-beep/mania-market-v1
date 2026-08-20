@@ -27,6 +27,8 @@ import { getRequestClientContext } from "@/lib/security/client-context";
 import { enforceRateLimit } from "@/lib/security/rate-limit";
 import { verifyTurnstileToken } from "@/lib/security/turnstile";
 import { recordAnalyticsEvent } from "@/lib/analytics";
+import { neonAuth } from "@/lib/neon/auth";
+import { queryRows } from "@/lib/neon/db";
 
 function throwDbError(context: string, error: unknown): never {
   logServerError(context, error);
@@ -59,8 +61,11 @@ async function guardProductOps(userId: string) {
 }
 
 async function guardSocialOps(userId: string) {
-  const service = createSupabaseServiceClient();
-  await enforceRateLimit(service, "social_ops", userId);
+  await queryRows(
+    `insert into public.rate_limit_events (bucket, subject_hash) values ('social_ops', $1)
+     returning id`,
+    [userId]
+  );
 }
 
 async function guardAdminOps(userId: string) {
@@ -79,23 +84,28 @@ async function guardApplicationSubmit(userId: string | null) {
 
 export async function signIn(formData: FormData) {
   const email = text(formData, "email");
+  const password = text(formData, "password");
   if (!email) throw new Error("メールアドレスを入力してください。");
+  if (!password) throw new Error("パスワードを入力してください。");
   const redirectTo = text(formData, "redirect_to") ?? "/mypage";
-  const supabase = await createSupabaseServerClient();
-  const origin = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-  const { error } = await supabase.auth.signInWithOtp({
-    email,
-    options: {
-      emailRedirectTo: `${origin}/auth/callback?next=${encodeURIComponent(redirectTo.startsWith("/") ? redirectTo : `/${redirectTo}`)}`
-    }
-  });
+  const { error } = await neonAuth.signIn.email({ email, password });
   if (error) throwDbError("serverAction", error);
-  redirect(`/login?sent=1&next=${encodeURIComponent(redirectTo)}` as Route);
+  redirect((redirectTo.startsWith("/") ? redirectTo : `/${redirectTo}`) as Route);
+}
+
+export async function signUp(formData: FormData) {
+  const email = text(formData, "email");
+  const password = text(formData, "password");
+  const name = text(formData, "name") ?? email?.split("@")[0];
+  if (!email || !password || !name) throw new Error("入力内容を確認してください。");
+  if (password.length < 8) throw new Error("パスワードは8文字以上で入力してください。");
+  const { error } = await neonAuth.signUp.email({ email, password, name });
+  if (error) throwDbError("signUp", error);
+  redirect("/mypage");
 }
 
 export async function signOut() {
-  const supabase = await createSupabaseServerClient();
-  await supabase.auth.signOut();
+  await neonAuth.signOut();
   redirect("/");
 }
 
@@ -328,9 +338,8 @@ export async function deleteProduct(formData: FormData) {
 
 export async function toggleFavoriteProduct(formData: FormData) {
   const returnTo = text(formData, "return_to") ?? "/products";
-  const supabase = await createSupabaseServerClient();
   const authUser = await requireAuth(loginRedirect(returnTo));
-  await ensureAppUser(supabase, authUser);
+  await ensureAppUser(null, authUser);
 
   const productId = text(formData, "product_id");
   if (!productId) return;
@@ -339,12 +348,13 @@ export async function toggleFavoriteProduct(formData: FormData) {
   const active = formData.get("active") === "true";
 
   if (active) {
-    await supabase.from("favorites").delete().eq("user_id", authUser.id).eq("product_id", productId);
+    await queryRows("delete from public.favorites where user_id = $1 and product_id = $2 returning id", [authUser.id, productId]);
   } else {
-    const { error } = await supabase
-      .from("favorites")
-      .upsert({ user_id: authUser.id, product_id: productId, shop_id: null });
-    if (error) throwDbError("serverAction", error);
+    await queryRows(
+      `insert into public.favorites (user_id, product_id, shop_id) values ($1, $2, null)
+       on conflict (user_id, product_id) where product_id is not null do nothing returning id`,
+      [authUser.id, productId]
+    );
     await recordAnalyticsEvent({ type: "favorite_add", productId, userId: authUser.id });
   }
 
@@ -353,9 +363,8 @@ export async function toggleFavoriteProduct(formData: FormData) {
 
 export async function toggleFavoriteShop(formData: FormData) {
   const returnTo = text(formData, "return_to") ?? "/shops";
-  const supabase = await createSupabaseServerClient();
   const authUser = await requireAuth(loginRedirect(returnTo));
-  await ensureAppUser(supabase, authUser);
+  await ensureAppUser(null, authUser);
 
   const shopId = text(formData, "shop_id");
   if (!shopId) return;
@@ -364,12 +373,13 @@ export async function toggleFavoriteShop(formData: FormData) {
   const active = formData.get("active") === "true";
 
   if (active) {
-    await supabase.from("favorites").delete().eq("user_id", authUser.id).eq("shop_id", shopId);
+    await queryRows("delete from public.favorites where user_id = $1 and shop_id = $2 returning id", [authUser.id, shopId]);
   } else {
-    const { error } = await supabase
-      .from("favorites")
-      .upsert({ user_id: authUser.id, shop_id: shopId, product_id: null });
-    if (error) throwDbError("serverAction", error);
+    await queryRows(
+      `insert into public.favorites (user_id, shop_id, product_id) values ($1, $2, null)
+       on conflict (user_id, shop_id) where shop_id is not null do nothing returning id`,
+      [authUser.id, shopId]
+    );
     await recordAnalyticsEvent({ type: "favorite_add", shopId, userId: authUser.id });
   }
 
@@ -378,9 +388,8 @@ export async function toggleFavoriteShop(formData: FormData) {
 
 export async function toggleFollowShop(formData: FormData) {
   const returnTo = text(formData, "return_to") ?? "/shops";
-  const supabase = await createSupabaseServerClient();
   const authUser = await requireAuth(loginRedirect(returnTo));
-  await ensureAppUser(supabase, authUser);
+  await ensureAppUser(null, authUser);
 
   const shopId = text(formData, "shop_id");
   if (!shopId) return;
@@ -389,10 +398,11 @@ export async function toggleFollowShop(formData: FormData) {
   const active = formData.get("active") === "true";
 
   if (active) {
-    await supabase.from("follows").delete().eq("user_id", authUser.id).eq("shop_id", shopId);
+    await queryRows("delete from public.follows where user_id = $1 and shop_id = $2 returning shop_id", [authUser.id, shopId]);
   } else {
-    const { error } = await supabase.from("follows").upsert({ user_id: authUser.id, shop_id: shopId });
-    if (error) throwDbError("serverAction", error);
+    await queryRows(
+      `insert into public.follows (user_id, shop_id) values ($1, $2)
+       on conflict (user_id, shop_id) do nothing returning shop_id`, [authUser.id, shopId]);
     await recordAnalyticsEvent({ type: "follow_add", shopId, userId: authUser.id });
   }
 
