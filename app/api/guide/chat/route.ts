@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { extractGuideKeywords } from "@/lib/guide/keywords";
 import { buildGuideResponse } from "@/lib/guide/respond";
 import { searchGuideCatalog } from "@/lib/queries/guide";
-import { createSupabasePublicClient } from "@/lib/supabase/public";
 
 export const dynamic = "force-dynamic";
 
@@ -25,9 +24,8 @@ export async function POST(request: Request) {
   }
 
   try {
-    const supabase = createSupabasePublicClient();
     const keywords = extractGuideKeywords(message);
-    const recommendations = await searchGuideCatalog(supabase, message, keywords);
+    const recommendations = await searchGuideCatalog(null, message, keywords);
     const response = buildGuideResponse(message, recommendations);
 
     return NextResponse.json(response);

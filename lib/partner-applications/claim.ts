@@ -1,63 +1,31 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "@/types/database";
+import { queryOne } from "@/lib/neon/db";
+import { upsertSellerRolePreservingAdmin } from "@/lib/auth";
 
 export function canClaimPublishedShop(input: {
-  applicationStatus: string;
-  shopId: string | null;
-  shopOwnerId: string | null | undefined;
-  shopPendingOwnerEmail: string | null | undefined;
-  userEmail: string;
+  applicationStatus: string; shopId: string | null; shopOwnerId: string | null | undefined;
+  shopPendingOwnerEmail: string | null | undefined; userEmail: string;
 }) {
-  if (input.applicationStatus !== "published") return false;
-  if (!input.shopId) return false;
-  if (input.shopOwnerId) return false;
-  if (!input.shopPendingOwnerEmail) return false;
-  return input.shopPendingOwnerEmail.toLowerCase() === input.userEmail.toLowerCase();
+  return input.applicationStatus === "published" && Boolean(input.shopId) && !input.shopOwnerId &&
+    Boolean(input.shopPendingOwnerEmail) && input.shopPendingOwnerEmail!.toLowerCase() === input.userEmail.toLowerCase();
 }
 
-export async function claimPendingShop(
-  supabase: SupabaseClient<Database>,
-  shopId: string
-): Promise<{ shopId: string }> {
-  const { data, error } = await supabase.rpc("claim_pending_shop", {
-    target_shop_id: shopId
-  });
-
-  if (error) {
-    const message = error.message ?? "ショップの引き継ぎに失敗しました。";
-    if (message.includes("権限がありません")) {
-      throw new Error("このショップを引き継ぐ権限がありません。ログイン中のメールが申請時と一致しているか確認してください。");
-    }
-    if (message.includes("すでにオーナー")) {
-      throw new Error("このショップはすでに別のオーナーに紐付けられています。");
-    }
-    throw new Error(message);
-  }
-
-  if (!data) {
-    throw new Error("ショップの引き継ぎに失敗しました。");
-  }
-
-  return { shopId: data };
+export async function claimPendingShop(_client: unknown, shopId: string, userId: string, email: string) {
+  const shop = await queryOne<{ id: string }>(
+    `update public.shops set owner_id=$1,pending_owner_email=null,updated_at=now()
+     where id=$2 and owner_id is null and lower(pending_owner_email)=lower($3) returning id::text`,
+    [userId, shopId, email]
+  );
+  if (!shop) throw new Error("このショップを引き継ぐ権限がないか、すでにオーナーが設定されています。");
+  await upsertSellerRolePreservingAdmin(null, userId, {});
+  return { shopId: shop.id };
 }
 
-export async function adminAssignShopOwner(
-  supabase: SupabaseClient<Database>,
-  shopId: string,
-  targetUserId: string
-): Promise<{ shopId: string }> {
-  const { data, error } = await supabase.rpc("admin_assign_shop_owner", {
-    target_shop_id: shopId,
-    target_user_id: targetUserId
-  });
-
-  if (error) {
-    throw new Error(error.message ?? "オーナーの強制紐付けに失敗しました。");
-  }
-
-  if (!data) {
-    throw new Error("オーナーの強制紐付けに失敗しました。");
-  }
-
-  return { shopId: data };
+export async function adminAssignShopOwner(_client: unknown, shopId: string, targetUserId: string) {
+  const shop = await queryOne<{ id: string }>(
+    `update public.shops set owner_id=$1,pending_owner_email=null,updated_at=now()
+     where id=$2 and owner_id is null returning id::text`, [targetUserId, shopId]
+  );
+  if (!shop) throw new Error("オーナーの強制紐付けに失敗しました。");
+  await upsertSellerRolePreservingAdmin(null, targetUserId, {});
+  return { shopId: shop.id };
 }

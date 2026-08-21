@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { ArrowLeft, Store } from "lucide-react";
 import { PartnerApplyForm } from "@/components/partner/partner-apply-form";
+import { getAuthUser } from "@/lib/auth";
 import { listCategories } from "@/lib/categories";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const metadata = {
   title: "出店申請 — Mania Market",
@@ -10,11 +10,7 @@ export const metadata = {
 };
 
 export default async function PartnerApplyPage() {
-  const supabase = await createSupabaseServerClient();
-  const [{ data: userData }, categories] = await Promise.all([
-    supabase.auth.getUser(),
-    listCategories(supabase)
-  ]);
+  const [user, categories] = await Promise.all([getAuthUser(), listCategories()]);
 
   return (
     <div className="bg-paper dark:bg-ink">
@@ -38,7 +34,7 @@ export default async function PartnerApplyPage() {
 
       <section className="mx-auto max-w-3xl px-4 py-12 sm:py-16">
         <div className="rounded-3xl border border-ink/10 bg-white/80 p-6 shadow-sm dark:border-paper/10 dark:bg-ink/50 sm:p-8">
-          <PartnerApplyForm categories={categories} defaultEmail={userData.user?.email} />
+          <PartnerApplyForm categories={categories} defaultEmail={user?.email} />
         </div>
       </section>
     </div>

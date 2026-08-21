@@ -4,20 +4,19 @@ import {
   listMyPartnerApplications,
   partnerApplicationErrorMessage
 } from "@/lib/queries/partner-applications";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getAuthUser } from "@/lib/auth";
 
 export const metadata = {
   title: "出店申請状況 — Mania Market"
 };
 
 export default async function MypageApplicationsPage() {
-  const supabase = await createSupabaseServerClient();
-  const { data: userData } = await supabase.auth.getUser();
-  if (!userData.user?.email) return null;
+  const user = await getAuthUser();
+  if (!user?.email) return null;
 
-  const userEmail = userData.user.email;
+  const userEmail = user.email;
 
-  const { data: applications, error } = await listMyPartnerApplications(supabase, userEmail);
+  const { data: applications, error } = await listMyPartnerApplications(null, userEmail);
   const errorMessage = partnerApplicationErrorMessage(error);
 
   return (
@@ -48,7 +47,7 @@ export default async function MypageApplicationsPage() {
             key={application.id}
             application={application}
             userEmail={userEmail}
-            userId={userData.user.id}
+            userId={user.id}
           />
         ))}
       </div>

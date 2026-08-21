@@ -17,7 +17,7 @@ v1.0 の対象外:
 
 - Next.js App Router
 - TypeScript
-- Supabase Auth / PostgreSQL / RLS
+- Neon Auth / Neon PostgreSQL
 - Tailwind CSS
 - Stripe Billing Checkout / Customer Portal / Webhook
 
@@ -37,9 +37,9 @@ PowerShell の実行ポリシーで `npm` が止まる場合は `npm.cmd install
 
 ```env
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
-NEXT_PUBLIC_SUPABASE_URL=https://xxxxx.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=xxxxx
-SUPABASE_SERVICE_ROLE_KEY=xxxxx
+DATABASE_URL=postgresql://...
+VITE_NEON_AUTH_URL=https://...
+NEON_AUTH_BASE_URL=https://...
 
 STRIPE_SECRET_KEY=sk_test_xxxxx
 STRIPE_WEBHOOK_SECRET=whsec_xxxxx
@@ -47,30 +47,22 @@ STRIPE_STANDARD_PRICE_ID=price_xxxxx
 STRIPE_PREMIUM_PRICE_ID=price_xxxxx
 ```
 
-## Supabase マイグレーション
+## Neon マイグレーション
 
-Supabase CLI を使う場合:
-
-```bash
-supabase link --project-ref <project-ref>
-supabase db push --include-all
-```
-
-SQL Editor で実行する場合は [supabase/001_initial_schema.sql](supabase/001_initial_schema.sql) を開き、全文を実行してください。
+Neon SQL Editor で [neon/001_initial_schema.sql](neon/001_initial_schema.sql)、続いて
+[neon/002_complete_platform.sql](neon/002_complete_platform.sql) を実行してください。
 
 このマイグレーションには以下が含まれます。
 
 - `profiles`, `shops`, `products`, `favorites`, `follows`, `analytics_events`
-- RLS ポリシー
-- 出店者が自分のショップと商品だけ編集できる制御
-- 管理者が全件を読める制御
+- サーバー側の所有者・管理者権限確認
 - 商品数上限の DB トリガー
 - 無料プラン降格時に作成日順で3件だけ `active`、4件目以降を `hidden` にする関数
 
 管理者を作るには、対象ユーザー作成後に SQL Editor で以下を実行します。
 
 ```sql
-update public.profiles
+update public.users
 set role = 'admin'
 where id = '<user-id>';
 ```
@@ -94,7 +86,7 @@ https://<your-domain>/api/stripe/webhook
 stripe listen --forward-to localhost:3000/api/stripe/webhook
 ```
 
-Webhook で購読状態が Supabase `profiles` に同期されます。解約、支払い失敗、非アクティブ化時は無料プランへ戻し、商品表示状態を制限に合わせて同期します。
+Webhook で購読状態が Neon `users` / `subscriptions` に同期されます。解約、支払い失敗、非アクティブ化時は無料プランへ戻します。
 
 ## 主要ルート
 

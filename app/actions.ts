@@ -4,12 +4,11 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { Route } from "next";
 import type { PartnerApplicationStatus } from "@/types/database";
-import { createSupabaseServerClient, createSupabaseServiceClient } from "@/lib/supabase/server";
 import { requireAdminUser } from "@/lib/partner-applications/admin";
 import { adminAssignShopOwner, claimPendingShop } from "@/lib/partner-applications/claim";
 import { publishPartnerApplicationShop } from "@/lib/partner-applications/publish";
 import { runManiaReviewAi } from "@/lib/partner-applications/review-ai";
-import { ensureAppUser, requireAuth, upsertSellerRolePreservingAdmin } from "@/lib/auth";
+import { ensureAppUser, getAuthUser, requireAuth, upsertSellerRolePreservingAdmin } from "@/lib/auth";
 import { parseCategoryIds } from "@/lib/categories";
 import {
   assertCanCreateProduct,
@@ -28,7 +27,7 @@ import { enforceRateLimit } from "@/lib/security/rate-limit";
 import { verifyTurnstileToken } from "@/lib/security/turnstile";
 import { recordAnalyticsEvent } from "@/lib/analytics";
 import { neonAuth } from "@/lib/neon/auth";
-import { queryRows } from "@/lib/neon/db";
+import { queryOne, queryRows } from "@/lib/neon/db";
 
 function throwDbError(context: string, error: unknown): never {
   logServerError(context, error);
@@ -55,9 +54,8 @@ function revalidateSocialPaths(returnTo: string) {
 }
 
 async function guardProductOps(userId: string) {
-  const service = createSupabaseServiceClient();
-  await enforceRateLimit(service, "product_ops", userId);
-  return { service, ctx: await getRequestClientContext() };
+  await enforceRateLimit(null, "product_ops", userId);
+  return { service: null, ctx: await getRequestClientContext() };
 }
 
 async function guardSocialOps(userId: string) {
@@ -69,17 +67,15 @@ async function guardSocialOps(userId: string) {
 }
 
 async function guardAdminOps(userId: string) {
-  const service = createSupabaseServiceClient();
-  await enforceRateLimit(service, "admin_ops", userId);
-  return { service, ctx: await getRequestClientContext() };
+  await enforceRateLimit(null, "admin_ops", userId);
+  return { service: null, ctx: await getRequestClientContext() };
 }
 
 async function guardApplicationSubmit(userId: string | null) {
-  const service = createSupabaseServiceClient();
   const ctx = await getRequestClientContext();
   const subject = userId ?? `ip:${ctx.ipHash}`;
-  await enforceRateLimit(service, "application_submit", subject);
-  return { service, ctx };
+  await enforceRateLimit(null, "application_submit", subject);
+  return { ctx };
 }
 
 export async function signIn(formData: FormData) {
@@ -110,41 +106,32 @@ export async function signOut() {
 }
 
 export async function saveShop(formData: FormData) {
-  const supabase = await createSupabaseServerClient();
   const authUser = await requireAuth();
-  await ensureAppUser(supabase, authUser);
+  await ensureAppUser(null, authUser);
 
   const slug = text(formData, "slug");
   const name = text(formData, "name");
   if (!slug || !name) throw new Error("ショップ名とslugは必須です。");
 
-  await upsertSellerRolePreservingAdmin(supabase, authUser.id, {
+  await upsertSellerRolePreservingAdmin(null, authUser.id, {
     display_name: authUser.email
   });
 
-  const payload = {
-    owner_id: authUser.id,
-    slug,
-    name,
-    description: text(formData, "description"),
-    website_url: text(formData, "website_url"),
-    logo_url: text(formData, "logo_url"),
-    cover_image_url: text(formData, "cover_image_url"),
-    twitter_url: text(formData, "twitter_url"),
-    instagram_url: text(formData, "instagram_url"),
-    location: text(formData, "location"),
-    is_published: formData.get("is_published") === "on"
-  };
-
   const shopId = text(formData, "shop_id");
-  const result = shopId
-    ? await supabase.from("shops").update(payload).eq("id", shopId).select("id").single()
-    : await supabase.from("shops").insert(payload).select("id").single();
-
-  if (result.error) throwDbError("saveShop", result.error);
-
-  const savedShopId = result.data.id;
-  await syncShopCategories(supabase, savedShopId, parseCategoryIds(formData));
+  const values = [authUser.id, slug, name, text(formData, "description"), text(formData, "website_url"),
+    text(formData, "logo_url"), text(formData, "cover_image_url"), text(formData, "twitter_url"),
+    text(formData, "instagram_url"), text(formData, "location"), formData.get("is_published") === "on"];
+  const saved = shopId
+    ? await queryOne<{ id: string }>(
+        `update public.shops set owner_id=$1,slug=$2,name=$3,description=$4,website_url=$5,logo_url=$6,
+         cover_image_url=$7,twitter_url=$8,instagram_url=$9,location=$10,is_published=$11,updated_at=now()
+         where id=$12 and owner_id=$1 returning id::text`, [...values, shopId])
+    : await queryOne<{ id: string }>(
+        `insert into public.shops
+         (owner_id,slug,name,description,website_url,logo_url,cover_image_url,twitter_url,instagram_url,location,is_published)
+         values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) returning id::text`, values);
+  if (!saved) throw new Error("ショップを保存できませんでした。");
+  await syncShopCategories(null, saved.id, parseCategoryIds(formData));
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/shop");
@@ -162,11 +149,11 @@ function parseCategoryId(formData: FormData) {
 }
 
 async function requireOwnedShopId(
-  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  client: unknown,
   ownerId: string,
   shopId: string
 ) {
-  const shop = await getOwnedShop(supabase, ownerId);
+  const shop = await getOwnedShop(client, ownerId);
   if (!shop || shop.id !== shopId) {
     throw new Error("自分のショップのみ操作できます。");
   }
@@ -174,7 +161,6 @@ async function requireOwnedShopId(
 }
 
 export async function createProduct(formData: FormData) {
-  const supabase = await createSupabaseServerClient();
   const authUser = await requireAuth("/dashboard/products/new" as Route);
 
   const shopId = text(formData, "shop_id");
@@ -184,30 +170,20 @@ export async function createProduct(formData: FormData) {
     throw new Error("ショップ、商品名、外部販売URLは必須です。");
   }
 
-  await requireOwnedShopId(supabase, authUser.id, shopId);
-  await assertCanCreateProduct(supabase, authUser.id);
+  await requireOwnedShopId(null, authUser.id, shopId);
+  await assertCanCreateProduct(null, authUser.id);
   const { service, ctx } = await guardProductOps(authUser.id);
   const uiStatus = parseUiStatus(formData);
 
-  const { data: product, error } = await supabase
-    .from("products")
-    .insert({
-      seller_id: authUser.id,
-      shop_id: shopId,
-      name,
-      description: text(formData, "description"),
-      price_label: text(formData, "price_label"),
-      external_url: externalUrl,
-      image_url: text(formData, "image_url"),
-      category_id: parseCategoryId(formData),
-      status: toDbProductStatus(uiStatus)
-    })
-    .select("id")
-    .single();
-
-  if (error) throwDbError("serverAction", error);
-
-  await syncProductTags(supabase, product.id, parseProductTags(text(formData, "tags")));
+  const product = await queryOne<{ id: string }>(
+    `insert into public.products
+     (seller_id,shop_id,name,description,price_label,external_url,image_url,category_id,status)
+     values ($1,$2,$3,$4,$5,$6,$7,$8,$9) returning id::text`,
+    [authUser.id,shopId,name,text(formData,"description"),text(formData,"price_label"),externalUrl,
+      text(formData,"image_url"),parseCategoryId(formData),toDbProductStatus(uiStatus)]
+  );
+  if (!product) throw new Error("商品を作成できませんでした。");
+  await syncProductTags(null, product.id, parseProductTags(text(formData, "tags")));
   await writeAuditLog(service, {
     userId: authUser.id,
     action: "seller_create_product",
@@ -225,7 +201,6 @@ export async function createProduct(formData: FormData) {
 }
 
 export async function updateProduct(formData: FormData) {
-  const supabase = await createSupabaseServerClient();
   const authUser = await requireAuth("/dashboard/products" as Route);
 
   const productId = text(formData, "product_id");
@@ -236,7 +211,7 @@ export async function updateProduct(formData: FormData) {
     throw new Error("商品情報が不正です。");
   }
 
-  const existing = await getSellerProduct(supabase, productId, authUser.id);
+  const existing = await getSellerProduct(null, productId, authUser.id);
   if (!existing || existing.shop_id !== shopId) {
     throw new Error("編集権限がありません。");
   }
@@ -244,23 +219,14 @@ export async function updateProduct(formData: FormData) {
   const { service, ctx } = await guardProductOps(authUser.id);
   const uiStatus = parseUiStatus(formData);
 
-  const { error } = await supabase
-    .from("products")
-    .update({
-      name,
-      description: text(formData, "description"),
-      price_label: text(formData, "price_label"),
-      external_url: externalUrl,
-      image_url: text(formData, "image_url"),
-      category_id: parseCategoryId(formData),
-      status: toDbProductStatus(uiStatus)
-    })
-    .eq("id", productId)
-    .eq("seller_id", authUser.id);
-
-  if (error) throwDbError("serverAction", error);
-
-  await syncProductTags(supabase, productId, parseProductTags(text(formData, "tags")));
+  const updated = await queryOne<{ id: string }>(
+    `update public.products set name=$1,description=$2,price_label=$3,external_url=$4,image_url=$5,
+     category_id=$6,status=$7,updated_at=now() where id=$8 and seller_id=$9 returning id::text`,
+    [name,text(formData,"description"),text(formData,"price_label"),externalUrl,text(formData,"image_url"),
+      parseCategoryId(formData),toDbProductStatus(uiStatus),productId,authUser.id]
+  );
+  if (!updated) throw new Error("商品を更新できませんでした。");
+  await syncProductTags(null, productId, parseProductTags(text(formData, "tags")));
   await writeAuditLog(service, {
     userId: authUser.id,
     action: "seller_update_product",
@@ -278,24 +244,17 @@ export async function updateProduct(formData: FormData) {
 }
 
 export async function updateProductStatus(formData: FormData) {
-  const supabase = await createSupabaseServerClient();
   const authUser = await requireAuth("/dashboard/products" as Route);
   const id = text(formData, "product_id");
   if (!id) throw new Error("商品IDがありません。");
 
-  const existing = await getSellerProduct(supabase, id, authUser.id);
+  const existing = await getSellerProduct(null, id, authUser.id);
   if (!existing) throw new Error("編集権限がありません。");
 
   const { service, ctx } = await guardProductOps(authUser.id);
   const dbStatus = toDbProductStatus(parseUiStatus(formData));
 
-  const { error } = await supabase
-    .from("products")
-    .update({ status: dbStatus })
-    .eq("id", id)
-    .eq("seller_id", authUser.id);
-
-  if (error) throwDbError("serverAction", error);
+  await queryRows("update public.products set status=$1,updated_at=now() where id=$2 and seller_id=$3 returning id", [dbStatus,id,authUser.id]);
   await writeAuditLog(service, {
     userId: authUser.id,
     action: "seller_update_product",
@@ -310,18 +269,16 @@ export async function updateProductStatus(formData: FormData) {
 }
 
 export async function deleteProduct(formData: FormData) {
-  const supabase = await createSupabaseServerClient();
   const authUser = await requireAuth("/dashboard/products" as Route);
   const id = text(formData, "product_id");
   if (!id) throw new Error("商品IDがありません。");
 
-  const existing = await getSellerProduct(supabase, id, authUser.id);
+  const existing = await getSellerProduct(null, id, authUser.id);
   if (!existing) throw new Error("削除権限がありません。");
 
   const { service, ctx } = await guardProductOps(authUser.id);
 
-  const { error } = await supabase.from("products").delete().eq("id", id).eq("seller_id", authUser.id);
-  if (error) throwDbError("serverAction", error);
+  await queryRows("delete from public.products where id=$1 and seller_id=$2 returning id", [id,authUser.id]);
   await writeAuditLog(service, {
     userId: authUser.id,
     action: "seller_delete_product",
@@ -449,9 +406,8 @@ export async function submitPartnerApplication(formData: FormData) {
     throw new Error("カテゴリを1つ以上選択してください。");
   }
 
-  const supabase = await createSupabaseServerClient();
-  const { data: userData } = await supabase.auth.getUser();
-  const { service, ctx } = await guardApplicationSubmit(userData.user?.id ?? null);
+  const authUser = await getAuthUser();
+  const { ctx } = await guardApplicationSubmit(authUser?.id ?? null);
   await verifyTurnstileToken(text(formData, "cf-turnstile-response"));
 
   const aiReview = runManiaReviewAi({
@@ -468,31 +424,29 @@ export async function submitPartnerApplication(formData: FormData) {
     categories
   });
 
-  const { data: inserted, error } = await supabase.from("partner_applications").insert({
-    shop_name,
-    owner_name,
-    email,
-    region: text(formData, "region"),
-    website_url: text(formData, "website_url"),
-    instagram_url: text(formData, "instagram_url"),
-    x_url: text(formData, "x_url"),
-    description: text(formData, "description"),
-    mission: text(formData, "mission"),
-    target_user: text(formData, "target_user"),
-    categories,
-    status: "pending",
-    ...aiReview
-  }).select("id").single();
+  const inserted = await queryRows<{ id: string }>(
+    `insert into public.partner_applications
+     (shop_name, owner_name, email, region, website_url, instagram_url, x_url,
+      description, mission, target_user, categories, status, ai_score, ai_specialty,
+      ai_originality, ai_passion, ai_safety, ai_recommendation, ai_comment, ai_checked_at)
+     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'pending',$12,$13,$14,$15,$16,$17,$18,$19)
+     returning id::text`,
+    [
+      shop_name, owner_name, email, text(formData, "region"), text(formData, "website_url"),
+      text(formData, "instagram_url"), text(formData, "x_url"), text(formData, "description"),
+      text(formData, "mission"), text(formData, "target_user"), categories, aiReview.ai_score,
+      aiReview.ai_specialty, aiReview.ai_originality, aiReview.ai_passion, aiReview.ai_safety,
+      aiReview.ai_recommendation, aiReview.ai_comment, aiReview.ai_checked_at
+    ]
+  );
+  const insertedId = inserted[0]?.id;
+  if (!insertedId) throw new Error("申請を保存できませんでした。");
 
-  if (error) {
-    throwDbError("submitPartnerApplication", error);
-  }
-
-  await writeAuditLog(service, {
-    userId: userData.user?.id ?? null,
+  await writeAuditLog(null, {
+    userId: authUser?.id ?? null,
     action: "application_submit",
     targetType: "partner_application",
-    targetId: inserted.id,
+    targetId: insertedId,
     metadata: {
       category_count: categories.length,
       ai_recommendation: aiReview.ai_recommendation ?? null
@@ -505,10 +459,9 @@ export async function submitPartnerApplication(formData: FormData) {
 }
 
 async function adminPartnerContext() {
-  const supabase = await createSupabaseServerClient();
   const authUser = await requireAuth("/admin/partner-applications" as Route);
-  await requireAdminUser(supabase, authUser.id);
-  return { supabase, authUser };
+  await requireAdminUser(null, authUser.id);
+  return { authUser };
 }
 
 function reviewNote(formData: FormData) {
@@ -522,40 +475,17 @@ function applicationId(formData: FormData) {
 }
 
 export async function setPartnerApplicationReviewing(formData: FormData) {
-  const { supabase } = await adminPartnerContext();
+  await adminPartnerContext();
   const id = applicationId(formData);
-  const now = new Date().toISOString();
-
-  const { error } = await supabase
-    .from("partner_applications")
-    .update({
-      status: "reviewing",
-      review_note: reviewNote(formData),
-      reviewed_at: now
-    })
-    .eq("id", id);
-
-  if (error) throwDbError("serverAction", error);
+  await queryRows("update public.partner_applications set status='reviewing',review_note=$1,reviewed_at=now() where id=$2 returning id", [reviewNote(formData),id]);
   revalidatePartnerApplicationPaths(id);
 }
 
 export async function approvePartnerApplication(formData: FormData) {
-  const { supabase, authUser } = await adminPartnerContext();
+  const { authUser } = await adminPartnerContext();
   const { service, ctx } = await guardAdminOps(authUser.id);
   const id = applicationId(formData);
-  const now = new Date().toISOString();
-
-  const { error } = await supabase
-    .from("partner_applications")
-    .update({
-      status: "approved",
-      review_note: reviewNote(formData),
-      reviewed_at: now,
-      approved_at: now
-    })
-    .eq("id", id);
-
-  if (error) throwDbError("serverAction", error);
+  await queryRows("update public.partner_applications set status='approved',review_note=$1,reviewed_at=now(),approved_at=now() where id=$2 returning id", [reviewNote(formData),id]);
   await writeAuditLog(service, {
     userId: authUser.id,
     action: "admin_approve_application",
@@ -569,22 +499,10 @@ export async function approvePartnerApplication(formData: FormData) {
 }
 
 export async function rejectPartnerApplication(formData: FormData) {
-  const { supabase, authUser } = await adminPartnerContext();
+  const { authUser } = await adminPartnerContext();
   const { service, ctx } = await guardAdminOps(authUser.id);
   const id = applicationId(formData);
-  const now = new Date().toISOString();
-
-  const { error } = await supabase
-    .from("partner_applications")
-    .update({
-      status: "rejected",
-      review_note: reviewNote(formData),
-      reviewed_at: now,
-      approved_at: null
-    })
-    .eq("id", id);
-
-  if (error) throwDbError("serverAction", error);
+  await queryRows("update public.partner_applications set status='rejected',review_note=$1,reviewed_at=now(),approved_at=null where id=$2 returning id", [reviewNote(formData),id]);
   await writeAuditLog(service, {
     userId: authUser.id,
     action: "admin_reject_application",
@@ -598,18 +516,9 @@ export async function rejectPartnerApplication(formData: FormData) {
 }
 
 export async function savePartnerApplicationReviewNote(formData: FormData) {
-  const { supabase } = await adminPartnerContext();
+  await adminPartnerContext();
   const id = applicationId(formData);
-
-  const { error } = await supabase
-    .from("partner_applications")
-    .update({
-      review_note: reviewNote(formData),
-      reviewed_at: new Date().toISOString()
-    })
-    .eq("id", id);
-
-  if (error) throwDbError("serverAction", error);
+  await queryRows("update public.partner_applications set review_note=$1,reviewed_at=now() where id=$2 returning id", [reviewNote(formData),id]);
   revalidatePartnerApplicationPaths(id);
 }
 
@@ -632,7 +541,6 @@ export async function publishPartnerApplication(formData: FormData) {
 }
 
 export async function claimPartnerShop(formData: FormData) {
-  const supabase = await createSupabaseServerClient();
   const authUser = await requireAuth("/mypage/applications" as Route);
   if (!authUser.email) {
     throw new Error("メールアドレスが確認できません。");
@@ -641,13 +549,10 @@ export async function claimPartnerShop(formData: FormData) {
   const shopId = text(formData, "shop_id");
   if (!shopId) throw new Error("ショップIDが不正です。");
 
-  const { data: shop, error: shopError } = await supabase
-    .from("shops")
-    .select("id, owner_id, pending_owner_email")
-    .eq("id", shopId)
-    .maybeSingle();
+  const shop = await queryOne<{id:string;owner_id:string|null;pending_owner_email:string|null}>(
+    "select id::text,owner_id,pending_owner_email from public.shops where id=$1", [shopId]);
 
-  if (shopError || !shop) {
+  if (!shop) {
     throw new Error("ショップが見つかりません。");
   }
   if (shop.owner_id) {
@@ -657,13 +562,12 @@ export async function claimPartnerShop(formData: FormData) {
     throw new Error("このショップを引き継ぐ権限がありません。");
   }
 
-  await claimPendingShop(supabase, shopId);
-  await ensureAppUser(supabase, authUser);
+  await ensureAppUser(null, authUser);
+  await claimPendingShop(null, shopId, authUser.id, authUser.email);
 
-  const service = createSupabaseServiceClient();
   const ctx = await getRequestClientContext();
   const applicationIdValue = text(formData, "application_id");
-  await writeAuditLog(service, {
+  await writeAuditLog(null, {
     userId: authUser.id,
     action: "seller_claim_shop",
     targetType: "shop",
@@ -685,44 +589,33 @@ export async function claimPartnerShop(formData: FormData) {
 }
 
 export async function adminForceAssignShopOwner(formData: FormData) {
-  const { supabase } = await adminPartnerContext();
+  await adminPartnerContext();
   const id = applicationId(formData);
   const targetEmail = text(formData, "target_email");
   if (!targetEmail) throw new Error("紐付け先メールアドレスを入力してください。");
 
-  const { data: application, error: appError } = await supabase
-    .from("partner_applications")
-    .select("shop_id, email")
-    .eq("id", id)
-    .single();
+  const application = await queryOne<{shop_id:string|null;email:string}>("select shop_id::text,email from public.partner_applications where id=$1", [id]);
 
-  if (appError || !application?.shop_id) {
+  if (!application?.shop_id) {
     throw new Error("公開済みショップが見つかりません。");
   }
 
-  const { data: shop, error: shopError } = await supabase
-    .from("shops")
-    .select("id, owner_id")
-    .eq("id", application.shop_id)
-    .single();
+  const shop = await queryOne<{id:string;owner_id:string|null}>("select id::text,owner_id from public.shops where id=$1", [application.shop_id]);
 
-  if (shopError || !shop) {
+  if (!shop) {
     throw new Error("ショップが見つかりません。");
   }
   if (shop.owner_id) {
     throw new Error("このショップはすでにオーナーがいます。");
   }
 
-  const service = createSupabaseServiceClient();
-  const { data: targetUserId, error: lookupError } = await service.rpc("user_id_by_email", {
-    target_email: targetEmail
-  });
+  const target = await queryOne<{id:string}>("select id from public.users where lower(email)=lower($1) limit 1", [targetEmail]);
 
-  if (lookupError || !targetUserId) {
+  if (!target) {
     throw new Error("指定メールのユーザーが見つかりません。先にアカウント登録が必要です。");
   }
 
-  await adminAssignShopOwner(supabase, shop.id, targetUserId);
+  await adminAssignShopOwner(null, shop.id, target.id);
   revalidatePartnerApplicationPaths(id);
   revalidatePath("/dashboard");
   revalidatePath("/shops");

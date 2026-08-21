@@ -1,14 +1,10 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "@/types/database";
+import { queryRows } from "@/lib/neon/db";
 
-export async function listCategories(supabase: SupabaseClient<Database>) {
-  const { data, error } = await supabase
-    .from("categories")
-    .select("id,slug,name,description")
-    .order("sort_order", { ascending: true });
-
-  if (error) throw error;
-  return data ?? [];
+export async function listCategories(_legacyClient?: unknown) {
+  return queryRows<{ id: string; slug: string; name: string; description: string | null }>(
+    `select id::text, slug, name, description
+     from public.categories order by sort_order asc, name asc`
+  );
 }
 
 export function parseCategoryIds(formData: FormData): string[] {

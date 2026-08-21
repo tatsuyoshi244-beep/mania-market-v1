@@ -1,13 +1,13 @@
 import type { NextConfig } from "next";
 
-function supabaseConnectHosts() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  if (!url) return "https://*.supabase.co wss://*.supabase.co";
+function neonAuthConnectHost() {
+  const url = process.env.NEON_AUTH_BASE_URL ?? process.env.VITE_NEON_AUTH_URL;
+  if (!url) return "https://*.neon.tech";
   try {
     const host = new URL(url).host;
-    return `https://${host} wss://${host}`;
+    return `https://${host}`;
   } catch {
-    return "https://*.supabase.co wss://*.supabase.co";
+    return "https://*.neon.tech";
   }
 }
 
@@ -17,7 +17,7 @@ const contentSecurityPolicy = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
-  `connect-src 'self' ${supabaseConnectHosts()} https://challenges.cloudflare.com https://api.stripe.com`,
+  `connect-src 'self' ${neonAuthConnectHost()} https://challenges.cloudflare.com https://api.stripe.com`,
   "frame-src https://challenges.cloudflare.com",
   "frame-ancestors 'none'",
   "base-uri 'self'",

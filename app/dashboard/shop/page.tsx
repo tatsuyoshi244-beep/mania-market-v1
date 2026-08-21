@@ -2,6 +2,7 @@ import { ShopForm } from "@/components/dashboard/shop-form";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { listCategories } from "@/lib/categories";
 import { requireDashboardAccess } from "@/lib/dashboard/access";
+import { queryRows } from "@/lib/neon/db";
 
 export const metadata = { title: "ショップ編集 — Mania Market" };
 
@@ -10,9 +11,10 @@ export default async function DashboardShopPage() {
   const categories = await listCategories(access.supabase);
 
   const selectedCategoryIds = access.shop
-    ? (
-        await access.supabase.from("shop_categories").select("category_id").eq("shop_id", access.shop.id)
-      ).data?.map((row) => row.category_id) ?? []
+    ? (await queryRows<{ category_id: string }>(
+        `select category_id::text from public.shop_categories where shop_id = $1::uuid`,
+        [access.shop.id]
+      )).map((row) => row.category_id)
     : [];
 
   return (

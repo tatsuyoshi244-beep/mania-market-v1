@@ -1,58 +1,32 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ProductLimitInfo } from "@/types/auth";
-import type { Database, PlanKey } from "@/types/database";
-import { COUNTABLE_PRODUCT_STATUSES } from "@/lib/products/status";
+import type { PlanKey, Product, Shop } from "@/types/database";
+import { queryOne, queryRows } from "@/lib/neon/db";
 
-export async function getProductLimitInfo(
-  supabase: SupabaseClient<Database>,
-  sellerId: string
-): Promise<ProductLimitInfo> {
-  const [{ data: user, error: userError }, { count, error: countError }] = await Promise.all([
-    supabase.from("users").select("plan_key").eq("id", sellerId).single(),
-    supabase
-      .from("products")
-      .select("id", { count: "exact", head: true })
-      .eq("seller_id", sellerId)
-      .in("status", COUNTABLE_PRODUCT_STATUSES)
-  ]);
-
-  if (userError || !user) {
-    throw new Error("ユーザーが見つかりません。");
-  }
-  if (countError) throw countError;
-
-  const planKey = user.plan_key as PlanKey;
-  const { data: plan, error: planError } = await supabase
-    .from("plans")
-    .select("product_limit")
-    .eq("key", planKey)
-    .single();
-
-  if (planError || !plan) {
-    throw new Error("プラン情報が見つかりません。");
-  }
-
-  const productCount = count ?? 0;
-  const limit = plan.product_limit;
-  const remaining = limit === null ? null : Math.max(limit - productCount, 0);
-
+export async function getProductLimitInfo(_legacyClient: unknown, sellerId: string): Promise<ProductLimitInfo> {
+  const row = await queryOne<{ plan_key: PlanKey; product_limit: number | null; product_count: number }>(
+    `select u.plan_key, pl.product_limit,
+            count(p.id) filter (where p.status in ('draft','active'))::int as product_count
+     from public.users u
+     join public.plans pl on pl.key = u.plan_key
+     left join public.products p on p.seller_id = u.id
+     where u.id = $1
+     group by u.plan_key, pl.product_limit`,
+    [sellerId]
+  );
+  if (!row) throw new Error("ユーザーまたはプラン情報が見つかりません。");
+  const remaining = row.product_limit === null ? null : Math.max(row.product_limit - row.product_count, 0);
   return {
-    planKey,
-    limit,
-    productCount,
+    planKey: row.plan_key,
+    limit: row.product_limit,
+    productCount: row.product_count,
     remaining,
-    canCreate: limit === null || productCount < limit
+    canCreate: row.product_limit === null || row.product_count < row.product_limit
   };
 }
 
-export async function assertCanCreateProduct(
-  supabase: SupabaseClient<Database>,
-  sellerId: string
-) {
-  const info = await getProductLimitInfo(supabase, sellerId);
-  if (!info.canCreate) {
-    throw new Error("現在のプランの上限に達しました");
-  }
+export async function assertCanCreateProduct(client: unknown, sellerId: string) {
+  const info = await getProductLimitInfo(client, sellerId);
+  if (!info.canCreate) throw new Error("現在のプランの上限に達しました");
 }
 
 export function parseProductTags(raw: string | null): string[] {
@@ -60,101 +34,59 @@ export function parseProductTags(raw: string | null): string[] {
   return [...new Set(raw.split(/[,、\s]+/).map((tag) => tag.trim().toLowerCase()).filter(Boolean))];
 }
 
-export async function syncProductTags(
-  supabase: SupabaseClient<Database>,
-  productId: string,
-  tags: string[]
-) {
-  await supabase.from("product_tags").delete().eq("product_id", productId);
-  if (tags.length === 0) return;
-
-  const { error } = await supabase.from("product_tags").insert(
-    tags.map((tag) => ({ product_id: productId, tag }))
-  );
-  if (error) throw error;
-}
-
-export async function syncShopCategories(
-  supabase: SupabaseClient<Database>,
-  shopId: string,
-  categoryIds: string[]
-) {
-  await supabase.from("shop_categories").delete().eq("shop_id", shopId);
-  if (categoryIds.length === 0) return;
-
-  const { error } = await supabase.from("shop_categories").insert(
-    categoryIds.map((category_id) => ({ shop_id: shopId, category_id }))
-  );
-  if (error) throw error;
-}
-
-export async function getOwnedShop(
-  supabase: SupabaseClient<Database>,
-  ownerId: string
-) {
-  const { data, error } = await supabase
-    .from("shops")
-    .select("*")
-    .eq("owner_id", ownerId)
-    .maybeSingle();
-
-  if (error) throw error;
-  return data;
-}
-
-export async function getSellerProduct(
-  supabase: SupabaseClient<Database>,
-  productId: string,
-  sellerId: string
-) {
-  const { data, error } = await supabase
-    .from("products")
-    .select("*, product_tags(tag)")
-    .eq("id", productId)
-    .eq("seller_id", sellerId)
-    .maybeSingle();
-
-  if (error) throw error;
-  return data;
-}
-
-export async function listSellerProducts(
-  supabase: SupabaseClient<Database>,
-  sellerId: string
-) {
-  const { data: products, error } = await supabase
-    .from("products")
-    .select("id, name, status, created_at, external_url, category_id, product_tags(tag)")
-    .eq("seller_id", sellerId)
-    .order("created_at", { ascending: false });
-
-  if (error) throw error;
-  if (!products || products.length === 0) return [];
-
-  const categoryIds = [
-    ...new Set(products.map((product) => product.category_id).filter((id): id is string => Boolean(id)))
-  ];
-
-  const categoryMap = new Map<string, { id: string; name: string }>();
-  if (categoryIds.length > 0) {
-    const { data: categories, error: categoryError } = await supabase
-      .from("categories")
-      .select("id, name")
-      .in("id", categoryIds);
-    if (categoryError) throw categoryError;
-    for (const category of categories ?? []) {
-      categoryMap.set(category.id, category);
-    }
+export async function syncProductTags(_legacyClient: unknown, productId: string, tags: string[]) {
+  await queryRows(`delete from public.product_tags where product_id = $1::uuid returning product_id`, [productId]);
+  for (const tag of tags) {
+    await queryRows(
+      `insert into public.product_tags (product_id, tag) values ($1::uuid, $2)
+       on conflict do nothing returning product_id`,
+      [productId, tag]
+    );
   }
+}
 
-  return products.map((product) => ({
-    id: product.id,
-    name: product.name,
-    status: product.status,
-    created_at: product.created_at,
-    external_url: product.external_url,
-    category_id: product.category_id,
-    product_tags: product.product_tags,
-    categories: product.category_id ? categoryMap.get(product.category_id) ?? null : null
-  }));
+export async function syncShopCategories(_legacyClient: unknown, shopId: string, categoryIds: string[]) {
+  await queryRows(`delete from public.shop_categories where shop_id = $1::uuid returning shop_id`, [shopId]);
+  for (const categoryId of categoryIds) {
+    await queryRows(
+      `insert into public.shop_categories (shop_id, category_id) values ($1::uuid, $2::uuid)
+       on conflict do nothing returning shop_id`,
+      [shopId, categoryId]
+    );
+  }
+}
+
+export async function getOwnedShop(_legacyClient: unknown, ownerId: string) {
+  return queryOne<Shop>(`select * from public.shops where owner_id = $1 limit 1`, [ownerId]);
+}
+
+export async function getSellerProduct(_legacyClient: unknown, productId: string, sellerId: string) {
+  return queryOne<Product & { product_tags: Array<{ tag: string }> }>(
+    `select p.*, coalesce(jsonb_agg(jsonb_build_object('tag', pt.tag))
+      filter (where pt.tag is not null), '[]'::jsonb) as product_tags
+     from public.products p left join public.product_tags pt on pt.product_id = p.id
+     where p.id = $1::uuid and p.seller_id = $2 group by p.id limit 1`,
+    [productId, sellerId]
+  );
+}
+
+export async function listSellerProducts(_legacyClient: unknown, sellerId: string) {
+  return queryRows<{
+    id: string; name: string; status: Product["status"]; created_at: string;
+    external_url: string; category_id: string | null; product_tags: Array<{ tag: string }>;
+    categories: { id: string; name: string } | null;
+  }>(
+    `select p.id::text, p.name, p.status, p.created_at::text, p.external_url,
+            p.category_id::text,
+            coalesce(jsonb_agg(distinct jsonb_build_object('tag', pt.tag))
+              filter (where pt.tag is not null), '[]'::jsonb) as product_tags,
+            case when c.id is null then null else jsonb_build_object('id', c.id::text, 'name', c.name) end as categories
+     from public.products p
+     left join public.product_tags pt on pt.product_id = p.id
+     left join public.categories c on c.id = p.category_id
+     where p.seller_id = $1
+     group by p.id, c.id
+     order by p.created_at desc`,
+    [sellerId]
+  );
 }

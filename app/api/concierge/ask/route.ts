@@ -1,16 +1,15 @@
 import { NextResponse } from "next/server";
 import { loadConciergeContext } from "@/lib/concierge/context";
 import { getConciergeProvider } from "@/lib/concierge/provider";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getAuthUser } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
 const MAX_LENGTH = 500;
 
 export async function POST(request: Request) {
-  const supabase = await createSupabaseServerClient();
-  const { data: userData } = await supabase.auth.getUser();
-  if (!userData.user) {
+  const user = await getAuthUser();
+  if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -27,7 +26,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: `question must be ${MAX_LENGTH} chars or less` }, { status: 400 });
   }
 
-  const context = await loadConciergeContext(supabase, userData.user.id);
+  const context = await loadConciergeContext(null, user.id);
   const provider = getConciergeProvider();
   const result = await provider.answerQuestion(question, context);
 

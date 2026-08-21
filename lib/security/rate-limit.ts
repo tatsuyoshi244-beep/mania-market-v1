@@ -1,5 +1,4 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "@/types/database";
+import { queryOne, queryRows } from "@/lib/neon/db";
 import { RATE_LIMIT_USER_ERROR } from "@/lib/security/safe-error";
 
 export type RateLimitProfile =
@@ -20,24 +19,25 @@ export function buildRateLimitKey(profile: RateLimitProfile, subject: string) {
 }
 
 export async function enforceRateLimit(
-  service: SupabaseClient<Database>,
+  _legacyClient: unknown,
   profile: RateLimitProfile,
   subject: string
 ) {
   const config = RATE_LIMITS[profile];
   const bucketKey = buildRateLimitKey(profile, subject);
 
-  const { data, error } = await service.rpc("consume_rate_limit", {
-    p_bucket_key: bucketKey,
-    p_max_count: config.max,
-    p_window_seconds: config.windowSeconds
-  });
-
-  if (error) {
-    throw error;
-  }
-
-  if (!data) {
+  const result = await queryOne<{ count: number }>(
+    `select count(*)::int as count from public.rate_limit_events
+     where bucket = $1 and subject_hash = $2
+       and created_at >= now() - ($3::text || ' seconds')::interval`,
+    [profile, bucketKey, config.windowSeconds]
+  );
+  if ((result?.count ?? 0) >= config.max) {
     throw new Error(RATE_LIMIT_USER_ERROR);
   }
+  await queryRows(
+    `insert into public.rate_limit_events (bucket, subject_hash)
+     values ($1, $2) returning id`,
+    [profile, bucketKey]
+  );
 }

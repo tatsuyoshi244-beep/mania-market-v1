@@ -1,5 +1,5 @@
 import { queryRows, queryOne } from "@/lib/neon/db";
-import { queryFailure, querySuccess, type QueryResult } from "@/lib/supabase/errors";
+import { queryFailure, querySuccess, type QueryResult } from "@/lib/db/errors";
 
 export type CategoryRow = {
   id: string;

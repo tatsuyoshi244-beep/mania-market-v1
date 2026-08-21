@@ -2,7 +2,7 @@ import { createHash } from "crypto";
 import { headers } from "next/headers";
 
 function hashSalt() {
-  return process.env.RATE_LIMIT_SALT ?? process.env.SUPABASE_SERVICE_ROLE_KEY?.slice(0, 16) ?? "mania-market-dev-salt";
+  return process.env.RATE_LIMIT_SALT ?? process.env.NEON_PROJECT_ID?.slice(0, 16) ?? "mania-market-dev-salt";
 }
 
 export function hashClientValue(value: string) {

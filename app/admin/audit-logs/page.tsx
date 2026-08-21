@@ -1,18 +1,19 @@
 import Link from "next/link";
 import { summarizeAuditMetadata } from "@/lib/audit/log";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { queryRows } from "@/lib/neon/db";
 
 export const metadata = {
   title: "監査ログ — Mania Market Admin"
 };
 
 export default async function AdminAuditLogsPage() {
-  const supabase = await createSupabaseServerClient();
-  const { data: logs, error } = await supabase
-    .from("audit_logs")
-    .select("id, created_at, action, target_type, target_id, user_id, metadata")
-    .order("created_at", { ascending: false })
-    .limit(200);
+  let error: Error | null = null;
+  let logs: Array<{id:string;created_at:string;action:string;target_type:string;target_id:string|null;user_id:string|null;metadata:unknown}> = [];
+  try {
+    logs = await queryRows("select id::text,created_at::text,action,target_type,target_id,user_id,metadata from public.audit_logs order by created_at desc limit 200");
+  } catch (cause) {
+    error = cause instanceof Error ? cause : new Error("query failed");
+  }
 
   return (
     <section className="mx-auto max-w-7xl px-4 py-10">

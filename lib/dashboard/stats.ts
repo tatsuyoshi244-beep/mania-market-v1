@@ -1,8 +1,7 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "@/types/database";
 import type { ProductLimitInfo } from "@/types/auth";
 import { PLANS } from "@/lib/plans";
 import { getProductLimitInfo } from "@/lib/products";
+import { queryOne } from "@/lib/neon/db";
 
 export type ShopStats = {
   followerCount: number;
@@ -32,31 +31,37 @@ const EMPTY_STATS: ShopStats = {
 };
 
 export async function getShopStats(
-  supabase: SupabaseClient<Database>,
+  _legacyClient: unknown,
   shopId: string
 ): Promise<ShopStats> {
-  const { data, error } = await supabase.rpc("seller_shop_stats", { target_shop_id: shopId });
-  if (error || !data || data.length === 0) return EMPTY_STATS;
-
-  const row = data[0];
+  const row = await queryOne<Record<keyof ShopStats, number>>(
+    `select
+      (select count(*)::int from public.follows where shop_id = $1::uuid) as "followerCount",
+      (select count(*)::int from public.favorites where shop_id = $1::uuid) as "shopFavoriteCount",
+      (select count(*)::int from public.favorites f join public.products p on p.id = f.product_id
+        where p.shop_id = $1::uuid) as "productFavoriteCount",
+      (select count(*)::int from public.analytics_events where shop_id = $1::uuid and event_type = 'shop_view') as "shopViewCount",
+      (select count(*)::int from public.analytics_events where shop_id = $1::uuid and event_type = 'product_view') as "productViewCount",
+      (select count(*)::int from public.analytics_events where shop_id = $1::uuid
+        and event_type in ('shop_view','product_view')) as "totalViewCount"`,
+    [shopId]
+  );
+  if (!row) return EMPTY_STATS;
   return {
-    followerCount: Number(row.follower_count ?? 0),
-    shopFavoriteCount: Number(row.shop_favorite_count ?? 0),
-    productFavoriteCount: Number(row.product_favorite_count ?? 0),
-    shopViewCount: Number(row.shop_view_count ?? 0),
-    productViewCount: Number(row.product_view_count ?? 0),
-    totalViewCount: Number(row.total_view_count ?? 0)
+    followerCount: Number(row.followerCount ?? 0), shopFavoriteCount: Number(row.shopFavoriteCount ?? 0),
+    productFavoriteCount: Number(row.productFavoriteCount ?? 0), shopViewCount: Number(row.shopViewCount ?? 0),
+    productViewCount: Number(row.productViewCount ?? 0), totalViewCount: Number(row.totalViewCount ?? 0)
   };
 }
 
 export async function getDashboardSummary(
-  supabase: SupabaseClient<Database>,
+  legacyClient: unknown,
   userId: string,
   shop: { id: string; name: string; slug: string; is_published: boolean }
 ): Promise<DashboardSummary> {
   const [limitInfo, stats] = await Promise.all([
-    getProductLimitInfo(supabase, userId),
-    getShopStats(supabase, shop.id)
+    getProductLimitInfo(legacyClient, userId),
+    getShopStats(legacyClient, shop.id)
   ]);
 
   return {

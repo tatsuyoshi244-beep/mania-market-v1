@@ -3,12 +3,11 @@ import type { Route } from "next";
 import type { Shop } from "@/types/database";
 import { getAuthenticatedSession } from "@/lib/auth";
 import { getOwnedShop } from "@/lib/products";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export type DashboardAccessMode = "owner" | "admin-readonly" | "seller-no-shop";
 
 export type DashboardAccess = {
-  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>;
+  supabase: never;
   userId: string;
   email: string | undefined;
   role: "buyer" | "seller" | "admin";
@@ -22,7 +21,7 @@ export async function getDashboardAccess(): Promise<DashboardAccess | null> {
   const session = await getAuthenticatedSession();
   if (!session) return null;
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = null as never;
   const role = session.appUser.role;
   const shop = await getOwnedShop(supabase, session.authUser.id);
 

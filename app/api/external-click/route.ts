@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { recordAnalyticsEvent } from "@/lib/analytics";
+import { getAuthUser } from "@/lib/auth";
 
 export async function GET(request: NextRequest) {
   const productId = request.nextUrl.searchParams.get("productId");
@@ -10,12 +10,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "valid url is required" }, { status: 400 });
   }
 
-  const supabase = await createSupabaseServerClient();
-  const { data } = await supabase.auth.getUser();
+  const user = await getAuthUser();
 
   await recordAnalyticsEvent({
     type: "external_click",
-    userId: data.user?.id,
+    userId: user?.id,
     productId,
     metadata: { url }
   });

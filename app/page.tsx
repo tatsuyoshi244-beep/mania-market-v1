@@ -13,7 +13,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { getCategoryShopCounts, getPopularCategories } from "@/lib/queries/categories";
 import { getDiscoverProducts } from "@/lib/queries/products";
 import { getPopularShops } from "@/lib/queries/shops";
-import { formatSupabaseError } from "@/lib/supabase/errors";
+import { formatDatabaseError } from "@/lib/db/errors";
 
 const DISCOVERY_LAYOUTS = ["tall", "square", "wide"] as const;
 
@@ -73,7 +73,7 @@ export default async function HomePage() {
     }
 
     try {
-      const result = await getPopularShops(undefined as never, 12);
+      const result = await getPopularShops(undefined, 12);
       shops = result.data;
       if (result.error) queryErrors.push({ source: result.source, error: result.error });
     } catch (error) {
@@ -81,7 +81,7 @@ export default async function HomePage() {
     }
 
     try {
-      const result = await getDiscoverProducts(undefined as never, 3);
+      const result = await getDiscoverProducts(undefined, 3);
       discoverProducts = result.data;
       if (result.error) queryErrors.push({ source: result.source, error: result.error });
     } catch (error) {
@@ -90,7 +90,7 @@ export default async function HomePage() {
 
   } catch (error) {
     queryErrors.push({ source: "home.neon", error });
-    console.error("[HomePage]", formatSupabaseError(error));
+    console.error("[HomePage]", formatDatabaseError(error));
   }
 
   return (

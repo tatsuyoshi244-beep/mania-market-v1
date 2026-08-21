@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
-import type { Route } from "next";
-import { redirect } from "next/navigation";
 import { createCheckoutSessionForPlan } from "@/lib/stripe/checkout";
 import { createBillingPortalSession } from "@/lib/stripe/portal";
 import { isPaidPlan } from "@/lib/stripe/prices";
 import { getActiveSubscriptionForUser } from "@/lib/stripe/sync";
-import { createSupabaseServerClient, createSupabaseServiceClient } from "@/lib/supabase/server";
+import { getAuthUser } from "@/lib/auth";
+import { queryOne } from "@/lib/neon/db";
 import { logServerError } from "@/lib/security/safe-log";
 import { toUserFacingError } from "@/lib/security/safe-error";
 
@@ -19,34 +18,28 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "無効なプランです。" }, { status: 400 });
   }
 
-  const supabase = await createSupabaseServerClient();
-  const { data: userData } = await supabase.auth.getUser();
-  if (!userData.user?.email) {
+  const user = await getAuthUser();
+  if (!user?.email) {
     return NextResponse.json({ error: "ログインが必要です。" }, { status: 401 });
   }
 
   try {
-    const service = createSupabaseServiceClient();
-    const activeSubscription = await getActiveSubscriptionForUser(service, userData.user.id);
+    const activeSubscription = await getActiveSubscriptionForUser(null, user.id);
 
     if (activeSubscription?.stripe_subscription_id) {
-      const { data: user } = await supabase
-        .from("users")
-        .select("stripe_customer_id")
-        .eq("id", userData.user.id)
-        .single();
+      const billingUser = await queryOne<{stripe_customer_id:string|null}>("select stripe_customer_id from public.users where id=$1", [user.id]);
 
-      if (!user?.stripe_customer_id) {
+      if (!billingUser?.stripe_customer_id) {
         return NextResponse.json({ error: "請求情報が見つかりません。" }, { status: 400 });
       }
 
-      const portal = await createBillingPortalSession(user.stripe_customer_id);
+      const portal = await createBillingPortalSession(billingUser.stripe_customer_id);
       return NextResponse.json({ url: portal.url });
     }
 
     const session = await createCheckoutSessionForPlan({
-      userId: userData.user.id,
-      email: userData.user.email,
+      userId: user.id,
+      email: user.email,
       planKey: plan
     });
 

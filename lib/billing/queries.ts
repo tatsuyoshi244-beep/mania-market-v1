@@ -1,7 +1,7 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database, PlanKey } from "@/types/database";
+import type { PlanKey } from "@/types/database";
 import { PLANS } from "@/lib/plans";
 import { getProductLimitInfo } from "@/lib/products";
+import { queryOne } from "@/lib/neon/db";
 
 export type BillingSummary = {
   planKey: PlanKey;
@@ -14,23 +14,22 @@ export type BillingSummary = {
 };
 
 export async function getBillingSummary(
-  supabase: SupabaseClient<Database>,
+  legacyClient: unknown,
   userId: string
 ): Promise<BillingSummary> {
-  const [{ data: user }, limitInfo, { data: subscription }] = await Promise.all([
-    supabase.from("users").select("plan_key, stripe_customer_id").eq("id", userId).single(),
-    getProductLimitInfo(supabase, userId),
-    supabase
-      .from("subscriptions")
-      .select("status, current_period_end")
-      .eq("user_id", userId)
-      .in("status", ["active", "trialing", "past_due"])
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle()
+  const [user, limitInfo, subscription] = await Promise.all([
+    queryOne<{ plan_key: PlanKey; stripe_customer_id: string | null }>(
+      `select plan_key, stripe_customer_id from public.users where id=$1`, [userId]
+    ),
+    getProductLimitInfo(legacyClient, userId),
+    queryOne<{ status: string; current_period_end: string | null }>(
+      `select status::text, current_period_end::text from public.subscriptions
+       where user_id=$1 and status in ('active','trialing','past_due')
+       order by created_at desc limit 1`, [userId]
+    )
   ]);
 
-  const planKey = (user?.plan_key ?? "free") as PlanKey;
+  const planKey = user?.plan_key ?? "free";
   const plan = PLANS[planKey];
 
   return {

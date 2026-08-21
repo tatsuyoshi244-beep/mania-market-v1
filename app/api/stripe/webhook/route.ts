@@ -3,7 +3,6 @@ import type Stripe from "stripe";
 import { getStripe } from "@/lib/stripe";
 import { getSubscriptionIdFromCheckoutSession } from "@/lib/stripe/checkout";
 import { recordBillingEvent, syncStripeSubscription, syncSubscriptionById } from "@/lib/stripe/sync";
-import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { logServerError } from "@/lib/security/safe-log";
 import { requireEnv } from "@/lib/env";
 
@@ -11,12 +10,11 @@ export const runtime = "nodejs";
 
 async function handleCheckoutCompleted(event: Stripe.Event) {
   const session = event.data.object as Stripe.Checkout.Session;
-  const service = createSupabaseServiceClient();
   const userId = session.metadata?.user_id ?? null;
   const subscriptionId = getSubscriptionIdFromCheckoutSession(session);
 
   if (subscriptionId) {
-    await syncSubscriptionById(service, subscriptionId, {
+    await syncSubscriptionById(null, subscriptionId, {
       userId,
       stripeEventId: event.id,
       billingEventType: "checkout_completed"
@@ -24,7 +22,7 @@ async function handleCheckoutCompleted(event: Stripe.Event) {
     return;
   }
 
-  await recordBillingEvent(service, {
+  await recordBillingEvent(null, {
     userId,
     eventType: "checkout_completed",
     stripeEventId: event.id,
@@ -38,9 +36,7 @@ async function handleSubscriptionEvent(
   billingEventType: "subscription_created" | "subscription_updated" | "subscription_canceled"
 ) {
   const subscription = event.data.object as Stripe.Subscription;
-  const service = createSupabaseServiceClient();
-
-  await syncStripeSubscription(service, subscription, {
+  await syncStripeSubscription(null, subscription, {
     userId: subscription.metadata.user_id,
     stripeEventId: event.id,
     billingEventType
@@ -49,19 +45,18 @@ async function handleSubscriptionEvent(
 
 async function handleInvoicePaymentFailed(event: Stripe.Event) {
   const invoice = event.data.object as Stripe.Invoice;
-  const service = createSupabaseServiceClient();
   const subscriptionId =
     typeof invoice.subscription === "string" ? invoice.subscription : invoice.subscription?.id;
 
   if (subscriptionId) {
-    await syncSubscriptionById(service, subscriptionId, {
+    await syncSubscriptionById(null, subscriptionId, {
       stripeEventId: event.id,
       billingEventType: "payment_failed"
     });
     return;
   }
 
-  await recordBillingEvent(service, {
+  await recordBillingEvent(null, {
     eventType: "payment_failed",
     stripeEventId: event.id,
     amount: invoice.amount_due,

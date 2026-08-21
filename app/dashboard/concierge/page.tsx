@@ -5,13 +5,12 @@ import { ConciergeFaq } from "@/components/concierge/concierge-faq";
 import { ConciergeGeneratePanel } from "@/components/concierge/concierge-generate-panel";
 import { ConciergeSidebar } from "@/components/concierge/concierge-sidebar";
 import { loadConciergePayload } from "@/lib/concierge/context";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getAuthUser } from "@/lib/auth";
 
 export default async function ConciergePage() {
-  const supabase = await createSupabaseServerClient();
-  const { data: userData } = await supabase.auth.getUser();
+  const user = await getAuthUser();
 
-  if (!userData.user) {
+  if (!user) {
     return (
       <div className="px-4 py-10">
         <AuthCard next="/dashboard/concierge" title="Mania Concierge" description="ログインして AI 秘書を利用してください。" />
@@ -19,7 +18,7 @@ export default async function ConciergePage() {
     );
   }
 
-  const payload = await loadConciergePayload(supabase, userData.user.id);
+  const payload = await loadConciergePayload(null, user.id);
 
   return (
     <section className="mx-auto max-w-7xl px-4 py-10">

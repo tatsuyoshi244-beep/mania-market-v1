@@ -1,5 +1,5 @@
 import { pageRange, SHOP_PAGE_SIZE, totalPages } from "@/lib/pagination";
-import { queryFailure, querySuccess, type QueryResult } from "@/lib/supabase/errors";
+import { queryFailure, querySuccess, type QueryResult } from "@/lib/db/errors";
 import { queryOne, queryRows } from "@/lib/neon/db";
 
 export type HomeShop = {

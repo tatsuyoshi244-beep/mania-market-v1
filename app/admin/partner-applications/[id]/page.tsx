@@ -4,7 +4,8 @@ import { AuthCard } from "@/components/auth-card";
 import { PartnerApplicationDetail } from "@/components/admin/partner-application-detail";
 import { PartnerApplicationStatusBadge } from "@/components/admin/partner-application-status";
 import { getPartnerApplicationById, requireAdminUser } from "@/lib/partner-applications/admin";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getAuthUser } from "@/lib/auth";
+import { queryOne } from "@/lib/neon/db";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -12,10 +13,9 @@ type PageProps = {
 
 export default async function AdminPartnerApplicationDetailPage({ params }: PageProps) {
   const { id } = await params;
-  const supabase = await createSupabaseServerClient();
-  const { data: userData } = await supabase.auth.getUser();
+  const user = await getAuthUser();
 
-  if (!userData.user) {
+  if (!user) {
     return (
       <div className="px-4 py-10">
         <AuthCard next={`/admin/partner-applications/${id}`} />
@@ -24,7 +24,7 @@ export default async function AdminPartnerApplicationDetailPage({ params }: Page
   }
 
   try {
-    await requireAdminUser(supabase, userData.user.id);
+    await requireAdminUser(null, user.id);
   } catch {
     return (
       <section className="mx-auto max-w-3xl px-4 py-10">
@@ -36,18 +36,15 @@ export default async function AdminPartnerApplicationDetailPage({ params }: Page
     );
   }
 
-  const application = await getPartnerApplicationById(supabase, id);
+  const application = await getPartnerApplicationById(null, id);
   if (!application) notFound();
 
   let shopSlug: string | null = null;
   let shopOwnerId: string | null = null;
   let shopPendingOwnerEmail: string | null = null;
   if (application.shop_id) {
-    const { data: shop } = await supabase
-      .from("shops")
-      .select("slug, owner_id, pending_owner_email")
-      .eq("id", application.shop_id)
-      .maybeSingle();
+    const shop = await queryOne<{slug:string;owner_id:string|null;pending_owner_email:string|null}>(
+      "select slug,owner_id,pending_owner_email from public.shops where id=$1", [application.shop_id]);
     shopSlug = shop?.slug ?? null;
     shopOwnerId = shop?.owner_id ?? null;
     shopPendingOwnerEmail = shop?.pending_owner_email ?? null;

@@ -1,5 +1,5 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database, Json } from "@/types/database";
+import type { Json } from "@/types/database";
+import { queryRows } from "@/lib/neon/db";
 import { logServerError } from "@/lib/security/safe-log";
 
 export type AuditAction =
@@ -49,20 +49,25 @@ export function sanitizeAuditMetadata(metadata: Record<string, Json> = {}) {
 }
 
 export async function writeAuditLog(
-  service: SupabaseClient<Database>,
+  _legacyClient: unknown,
   input: WriteAuditLogInput
 ) {
-  const { error } = await service.from("audit_logs").insert({
-    user_id: input.userId ?? null,
-    action: input.action,
-    target_type: input.targetType,
-    target_id: input.targetId ?? null,
-    metadata: sanitizeAuditMetadata(input.metadata),
-    ip_hash: input.ipHash ?? null,
-    user_agent_hash: input.userAgentHash ?? null
-  });
-
-  if (error) {
+  try {
+    await queryRows(
+      `insert into public.audit_logs
+       (user_id, action, target_type, target_id, metadata, ip_hash, user_agent_hash)
+       values ($1, $2, $3, $4, $5::jsonb, $6, $7) returning id`,
+      [
+        input.userId ?? null,
+        input.action,
+        input.targetType,
+        input.targetId ?? null,
+        JSON.stringify(sanitizeAuditMetadata(input.metadata)),
+        input.ipHash ?? null,
+        input.userAgentHash ?? null
+      ]
+    );
+  } catch (error) {
     logServerError("writeAuditLog", error);
   }
 }

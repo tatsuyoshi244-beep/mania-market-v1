@@ -1,17 +1,12 @@
 import Link from "next/link";
 import { AuthCard } from "@/components/auth-card";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getAuthUser } from "@/lib/auth";
+import { queryOne, queryRows } from "@/lib/neon/db";
 
 export default async function AdminPage() {
-  const supabase = await createSupabaseServerClient();
-  const { data: userData } = await supabase.auth.getUser();
-  if (!userData.user) return <div className="px-4 py-10"><AuthCard /></div>;
-
-  const { data: user } = await supabase
-    .from("users")
-    .select("role")
-    .eq("id", userData.user.id)
-    .single();
+  const authUser = await getAuthUser();
+  if (!authUser) return <div className="px-4 py-10"><AuthCard /></div>;
+  const user = await queryOne<{ role: string }>("select role from public.users where id=$1", [authUser.id]);
 
   if (user?.role !== "admin") {
     return (
@@ -24,10 +19,10 @@ export default async function AdminPage() {
     );
   }
 
-  const [{ data: shops }, { data: products }, { data: events }] = await Promise.all([
-    supabase.from("shops").select("id,name,slug,is_published,created_at").order("created_at", { ascending: false }).limit(20),
-    supabase.from("products").select("id,name,status,created_at").order("created_at", { ascending: false }).limit(20),
-    supabase.from("analytics_events").select("id,event_type,created_at").order("created_at", { ascending: false }).limit(20)
+  const [shops, products, events] = await Promise.all([
+    queryRows<{name:string;is_published:boolean}>("select name,is_published from public.shops order by created_at desc limit 20"),
+    queryRows<{name:string;status:string}>("select name,status::text from public.products order by created_at desc limit 20"),
+    queryRows<{event_type:string;created_at:string}>("select event_type,created_at::text from public.analytics_events order by created_at desc limit 20")
   ]);
 
   return (
@@ -50,9 +45,9 @@ export default async function AdminPage() {
         </Link>
       </div>
       <div className="mt-8 grid gap-6 lg:grid-cols-3">
-        <AdminList title="ショップ" rows={(shops ?? []).map((shop) => `${shop.name} / ${shop.is_published ? "公開" : "非公開"}`)} />
-        <AdminList title="商品" rows={(products ?? []).map((product) => `${product.name} / ${product.status}`)} />
-        <AdminList title="分析イベント" rows={(events ?? []).map((event) => `${event.event_type} / ${new Date(event.created_at).toLocaleString("ja-JP")}`)} />
+        <AdminList title="ショップ" rows={shops.map((shop) => `${shop.name} / ${shop.is_published ? "公開" : "非公開"}`)} />
+        <AdminList title="商品" rows={products.map((product) => `${product.name} / ${product.status}`)} />
+        <AdminList title="分析イベント" rows={events.map((event) => `${event.event_type} / ${new Date(event.created_at).toLocaleString("ja-JP")}`)} />
       </div>
     </section>
   );

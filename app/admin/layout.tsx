@@ -1,13 +1,12 @@
 import { AuthCard } from "@/components/auth-card";
 import { AccessDenied } from "@/components/access-denied";
 import { requireAdminUser } from "@/lib/partner-applications/admin";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getAuthUser } from "@/lib/auth";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const supabase = await createSupabaseServerClient();
-  const { data: userData } = await supabase.auth.getUser();
+  const user = await getAuthUser();
 
-  if (!userData.user) {
+  if (!user) {
     return (
       <div className="px-4 py-10">
         <AuthCard next="/admin" title="管理画面" description="管理者としてログインしてください。" />
@@ -16,7 +15,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   }
 
   try {
-    await requireAdminUser(supabase, userData.user.id);
+    await requireAdminUser(null, user.id);
   } catch {
     return (
       <AccessDenied

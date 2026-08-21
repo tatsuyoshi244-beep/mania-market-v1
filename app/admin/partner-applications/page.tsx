@@ -5,16 +5,16 @@ import {
   listAllPartnerApplications,
   partnerApplicationErrorMessage
 } from "@/lib/queries/partner-applications";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getAuthUser } from "@/lib/auth";
+import { requireAdminUser } from "@/lib/partner-applications/admin";
 
 export const metadata = {
   title: "出店申請管理 — Mania Market Admin"
 };
 
 export default async function AdminPartnerApplicationsPage() {
-  const supabase = await createSupabaseServerClient();
-  const { data: userData } = await supabase.auth.getUser();
-  if (!userData.user) {
+  const user = await getAuthUser();
+  if (!user) {
     return (
       <div className="px-4 py-10">
         <AuthCard next="/admin/partner-applications" />
@@ -22,9 +22,9 @@ export default async function AdminPartnerApplicationsPage() {
     );
   }
 
-  const { data: user } = await supabase.from("users").select("role").eq("id", userData.user.id).single();
-
-  if (user?.role !== "admin") {
+  try {
+    await requireAdminUser(null, user.id);
+  } catch {
     return (
       <section className="mx-auto max-w-3xl px-4 py-10">
         <div className="rounded-lg border border-ink/10 bg-paper/95 p-6 shadow-sm">
@@ -35,7 +35,7 @@ export default async function AdminPartnerApplicationsPage() {
     );
   }
 
-  const { data: applications, error } = await listAllPartnerApplications(supabase);
+  const { data: applications, error } = await listAllPartnerApplications();
   const errorMessage = partnerApplicationErrorMessage(error);
 
   return (

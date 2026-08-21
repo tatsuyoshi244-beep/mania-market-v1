@@ -1,5 +1,5 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database, Json } from "@/types/database";
+import type { Json } from "@/types/database";
+import { queryOne } from "@/lib/neon/db";
 
 export type TopProductRow = {
   product_id: string;
@@ -66,15 +66,29 @@ function parseTopPages(value: Json | undefined): TopPageRow[] {
 }
 
 export async function getShopAnalyticsSummary(
-  supabase: SupabaseClient<Database>,
+  _legacyClient: unknown,
   shopId: string
 ): Promise<ShopAnalyticsSummary> {
-  const { data, error } = await supabase.rpc("seller_shop_analytics", { target_shop_id: shopId });
-  if (error || !data || typeof data !== "object" || Array.isArray(data)) {
-    return EMPTY_ANALYTICS;
-  }
-
-  const payload = data as Record<string, Json | undefined>;
+  const payload = await queryOne<Record<string, Json | undefined>>(
+    `select
+      (select count(*)::int from public.analytics_events where shop_id=$1::uuid
+        and event_type in ('shop_view','product_view') and created_at >= date_trunc('day', now())) as views_today,
+      (select count(*)::int from public.analytics_events where shop_id=$1::uuid
+        and event_type in ('shop_view','product_view') and created_at >= now()-interval '7 days') as views_7d,
+      (select count(*)::int from public.analytics_events where shop_id=$1::uuid
+        and event_type in ('shop_view','product_view') and created_at >= now()-interval '30 days') as views_30d,
+      coalesce((select jsonb_agg(t) from (select p.id::text as product_id,p.name,count(*)::int as views
+        from public.analytics_events ae join public.products p on p.id=ae.product_id
+        where ae.shop_id=$1::uuid and ae.event_type='product_view' and ae.created_at>=now()-interval '30 days'
+        group by p.id,p.name order by views desc limit 5) t),'[]'::jsonb) as top_products,
+      coalesce((select jsonb_agg(t) from (select 'product'::text as page_type,
+        coalesce(p.name,'商品ページ')::text as label,count(*)::int as views
+        from public.analytics_events ae left join public.products p on p.id=ae.product_id
+        where ae.shop_id=$1::uuid and ae.event_type='product_view' and ae.created_at>=now()-interval '30 days'
+        group by p.name order by views desc limit 5) t),'[]'::jsonb) as top_pages`,
+    [shopId]
+  );
+  if (!payload) return EMPTY_ANALYTICS;
   return {
     viewsToday: asNumber(payload.views_today),
     views7d: asNumber(payload.views_7d),
