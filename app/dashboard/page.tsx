@@ -3,6 +3,7 @@ import { DashboardSummaryCards } from "@/components/dashboard/dashboard-summary"
 import { GettingStartedSteps } from "@/components/dashboard/getting-started-steps";
 import { requireDashboardAccess } from "@/lib/dashboard/access";
 import { getDashboardSummary } from "@/lib/dashboard/stats";
+import { PartnerShareCard } from "@/components/dashboard/partner-share-card";
 
 export const metadata = { title: "運営サマリー — Mania Market" };
 
@@ -32,6 +33,7 @@ export default async function DashboardPage() {
   return (
     <DashboardShell title="運営サマリー" description="ショップの運営状況をひと目で確認できます。" email={access.email} mode={access.mode} shopName={access.shop.name}>
       <DashboardSummaryCards summary={summary} readOnly={!access.canEdit} />
+      {access.canEdit ? <PartnerShareCard shopSlug={access.shop.slug} /> : null}
       <section className="mt-10">
         <h2 className="text-2xl font-black">はじめの一歩</h2>
         <div className="mt-4">
