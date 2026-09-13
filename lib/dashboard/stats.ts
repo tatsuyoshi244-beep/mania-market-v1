@@ -30,10 +30,7 @@ const EMPTY_STATS: ShopStats = {
   totalViewCount: 0
 };
 
-export async function getShopStats(
-  _legacyClient: unknown,
-  shopId: string
-): Promise<ShopStats> {
+export async function getShopStats(shopId: string): Promise<ShopStats> {
   const row = await queryOne<Record<keyof ShopStats, number>>(
     `select
       (select count(*)::int from public.follows where shop_id = $1::uuid) as "followerCount",
@@ -55,13 +52,12 @@ export async function getShopStats(
 }
 
 export async function getDashboardSummary(
-  legacyClient: unknown,
   userId: string,
   shop: { id: string; name: string; slug: string; is_published: boolean }
 ): Promise<DashboardSummary> {
   const [limitInfo, stats] = await Promise.all([
-    getProductLimitInfo(legacyClient, userId),
-    getShopStats(legacyClient, shop.id)
+    getProductLimitInfo(userId),
+    getShopStats(shop.id)
   ]);
 
   return {

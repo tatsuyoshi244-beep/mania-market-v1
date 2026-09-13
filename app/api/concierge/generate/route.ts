@@ -30,7 +30,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid type" }, { status: 400 });
   }
 
-  const context = await loadConciergeContext(null, user.id);
+  const context = await loadConciergeContext(user.id);
   const provider = getConciergeProvider();
   const result = await provider.generateText({
     type: body.type,

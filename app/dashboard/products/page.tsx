@@ -20,8 +20,8 @@ export default async function DashboardProductsPage() {
   }
 
   const [products, limitInfo] = await Promise.all([
-    listSellerProducts(access.supabase, access.userId),
-    getProductLimitInfo(access.supabase, access.userId)
+    listSellerProducts(access.userId),
+    getProductLimitInfo(access.userId)
   ]);
 
   return (

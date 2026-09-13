@@ -6,28 +6,28 @@ import { FollowShopButton } from "@/components/follow-shop-button";
 import { listProductsByShop } from "@/lib/queries/products";
 import { getShopBySlug } from "@/lib/queries/shops";
 import { asRelatedList } from "@/lib/utils";
+import { getAuthUser } from "@/lib/auth";
+import { getUserSocialState } from "@/lib/queries/social";
+import { AnalyticsView } from "@/components/analytics-view";
 
 export const dynamic = "force-dynamic";
 
 export default async function ShopDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const shop = await getShopBySlug(undefined, slug);
+  const [shop, user] = await Promise.all([getShopBySlug(slug), getAuthUser()]);
   if (!shop) notFound();
 
-  const social = {
-    favoriteShopIds: new Set<string>(),
-    followingShopIds: new Set<string>(),
-    favoriteProductIds: new Set<string>()
-  };
+  const social = await getUserSocialState(user?.id);
   const returnTo = `/shops/${slug}`;
 
-  const products = await listProductsByShop(undefined, shop.id);
+  const products = await listProductsByShop(shop.id);
   const categoryNames = asRelatedList(shop.shop_categories)
     .map((row) => row.categories?.name)
     .filter(Boolean);
 
   return (
     <section className="pb-12">
+      <AnalyticsView type="shop_view" shopId={shop.id} />
       <div className="relative h-48 overflow-hidden bg-lagoon/20 sm:h-64 lg:h-80">
         {shop.cover_image_url ? (
           // eslint-disable-next-line @next/next/no-img-element

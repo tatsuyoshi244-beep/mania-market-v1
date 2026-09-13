@@ -16,25 +16,25 @@ const shopProjection = `s.id::text, s.slug, s.name, s.description, s.website_url
     from public.shop_categories sc join public.categories c on c.id = sc.category_id
     where sc.shop_id = s.id), '[]'::jsonb) as shop_categories`;
 
-export async function listFavoriteProducts(_client: unknown, userId: string): Promise<HomeProduct[]> {
+export async function listFavoriteProducts(userId: string): Promise<HomeProduct[]> {
   return queryRows<HomeProduct>(`select ${productProjection} from public.favorites f
     join public.products p on p.id = f.product_id join public.shops s on s.id = p.shop_id
     where f.user_id = $1 and p.status = 'active' order by f.created_at desc`, [userId]);
 }
 
-export async function listFavoriteShops(_client: unknown, userId: string): Promise<HomeShop[]> {
+export async function listFavoriteShops(userId: string): Promise<HomeShop[]> {
   return queryRows<HomeShop>(`select ${shopProjection} from public.favorites f
     join public.shops s on s.id = f.shop_id where f.user_id = $1 and s.is_published = true
     order by f.created_at desc`, [userId]);
 }
 
-export async function listFollowingShops(_client: unknown, userId: string): Promise<HomeShop[]> {
+export async function listFollowingShops(userId: string): Promise<HomeShop[]> {
   return queryRows<HomeShop>(`select ${shopProjection} from public.follows f
     join public.shops s on s.id = f.shop_id where f.user_id = $1 and s.is_published = true
     order by f.created_at desc`, [userId]);
 }
 
-export async function getMypageCounts(_client: unknown, userId: string) {
+export async function getMypageCounts(userId: string) {
   const row = await queryOne<{ favorite_products: number; favorite_shops: number; following_shops: number }>(
     `select
       (select count(*)::int from public.favorites where user_id = $1 and product_id is not null) favorite_products,

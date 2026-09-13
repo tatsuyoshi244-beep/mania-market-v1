@@ -8,8 +8,8 @@ export default async function FavoriteShopsPage() {
   if (!user) return null;
 
   const [shops, social] = await Promise.all([
-    listFavoriteShops(null, user.id),
-    getUserSocialState(null, user.id)
+    listFavoriteShops(user.id),
+    getUserSocialState(user.id)
   ]);
 
   return (

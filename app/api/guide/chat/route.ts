@@ -25,7 +25,7 @@ export async function POST(request: Request) {
 
   try {
     const keywords = extractGuideKeywords(message);
-    const recommendations = await searchGuideCatalog(null, message, keywords);
+    const recommendations = await searchGuideCatalog(message, keywords);
     const response = buildGuideResponse(message, recommendations);
 
     return NextResponse.json(response);

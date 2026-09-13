@@ -18,7 +18,7 @@ export default async function ConciergePage() {
     );
   }
 
-  const payload = await loadConciergePayload(null, user.id);
+  const payload = await loadConciergePayload(user.id);
 
   return (
     <section className="mx-auto max-w-7xl px-4 py-10">

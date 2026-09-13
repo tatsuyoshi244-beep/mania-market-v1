@@ -4,15 +4,18 @@ import Link from "next/link";
 import { FavoriteProductButton } from "@/components/favorite-product-button";
 import { getProductById } from "@/lib/queries/products";
 import { asRelatedList } from "@/lib/utils";
+import { getAuthUser } from "@/lib/auth";
+import { getUserSocialState } from "@/lib/queries/social";
+import { AnalyticsView } from "@/components/analytics-view";
 
 export const dynamic = "force-dynamic";
 
 export default async function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const product = await getProductById(undefined, id);
+  const [product, user] = await Promise.all([getProductById(id), getAuthUser()]);
   if (!product) notFound();
 
-  const social = { favoriteProductIds: new Set<string>() };
+  const social = await getUserSocialState(user?.id);
   const returnTo = `/products/${id}`;
 
   const tags = asRelatedList(product.product_tags).map((row) => row.tag);
@@ -20,6 +23,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
 
   return (
     <section className="mx-auto grid max-w-6xl gap-8 px-4 py-10 lg:grid-cols-[0.95fr_1.05fr]">
+      <AnalyticsView type="product_view" productId={product.id} />
       <div className="overflow-hidden rounded-2xl border border-ink/10 bg-white/90 shadow-sm dark:border-paper/10 dark:bg-ink/60">
         <div className="aspect-square bg-lagoon/15">
           {product.image_url ? (
@@ -57,7 +61,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
               variant="text"
             />
             <a
-              href={`/api/external-click?productId=${product.id}&url=${encodeURIComponent(product.external_url)}`}
+              href={`/api/external-click?productId=${product.id}`}
               className="inline-flex items-center gap-2 rounded-md bg-ink px-5 py-3 font-semibold text-white hover:bg-lagoon dark:bg-lagoon"
             >
               <ExternalLink className="size-4" />

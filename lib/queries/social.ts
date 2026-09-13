@@ -10,7 +10,7 @@ const emptyState = (): UserSocialState => ({
   favoriteProductIds: new Set(), favoriteShopIds: new Set(), followingShopIds: new Set()
 });
 
-export async function getUserSocialState(_client: unknown, userId?: string | null) {
+export async function getUserSocialState(userId?: string | null) {
   if (!userId) return emptyState();
   const [favorites, follows] = await Promise.all([
     queryRows<{ product_id: string | null; shop_id: string | null }>(

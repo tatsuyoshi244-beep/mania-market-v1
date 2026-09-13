@@ -7,7 +7,7 @@ export default async function MypagePage() {
   const user = await getAuthUser();
   if (!user) return null;
 
-  const counts = await getMypageCounts(null, user.id);
+  const counts = await getMypageCounts(user.id);
 
   const cards = [
     { href: "/mypage/applications", label: "出店申請状況", count: null as number | null },

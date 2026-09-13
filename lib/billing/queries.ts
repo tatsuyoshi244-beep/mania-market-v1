@@ -13,15 +13,12 @@ export type BillingSummary = {
   limitInfo: Awaited<ReturnType<typeof getProductLimitInfo>>;
 };
 
-export async function getBillingSummary(
-  legacyClient: unknown,
-  userId: string
-): Promise<BillingSummary> {
+export async function getBillingSummary(userId: string): Promise<BillingSummary> {
   const [user, limitInfo, subscription] = await Promise.all([
     queryOne<{ plan_key: PlanKey; stripe_customer_id: string | null }>(
       `select plan_key, stripe_customer_id from public.users where id=$1`, [userId]
     ),
-    getProductLimitInfo(legacyClient, userId),
+    getProductLimitInfo(userId),
     queryOne<{ status: string; current_period_end: string | null }>(
       `select status::text, current_period_end::text from public.subscriptions
        where user_id=$1 and status in ('active','trialing','past_due')

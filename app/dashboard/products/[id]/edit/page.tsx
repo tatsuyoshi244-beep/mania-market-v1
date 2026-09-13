@@ -15,9 +15,9 @@ export default async function DashboardProductEditPage({ params }: PageProps) {
   const { id } = await params;
   const access = await requireOwnerDashboardAccess(`/dashboard/products/${id}/edit` as Route);
   const [product, categories, limitInfo] = await Promise.all([
-    getSellerProduct(access.supabase, id, access.userId),
-    listCategories(access.supabase),
-    getProductLimitInfo(access.supabase, access.userId)
+    getSellerProduct(id, access.userId),
+    listCategories(),
+    getProductLimitInfo(access.userId)
   ]);
   if (!product) notFound();
   const tags = asRelatedList(product.product_tags).map((row) => row.tag);

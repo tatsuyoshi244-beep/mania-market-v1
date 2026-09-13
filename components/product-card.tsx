@@ -63,7 +63,7 @@ export function ProductCard({
           <div className="flex gap-2">
             <FavoriteProductButton productId={product.id} active={isFavorited} returnTo={returnTo} />
             <a
-              href={`/api/external-click?productId=${product.id}&url=${encodeURIComponent(product.external_url)}`}
+              href={`/api/external-click?productId=${product.id}`}
               className="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-ink px-3 py-2 text-sm font-semibold text-white hover:bg-lagoon dark:bg-lagoon"
             >
               <ExternalLink className="size-4" />

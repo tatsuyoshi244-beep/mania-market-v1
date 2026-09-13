@@ -7,7 +7,6 @@ import { getOwnedShop } from "@/lib/products";
 export type DashboardAccessMode = "owner" | "admin-readonly" | "seller-no-shop";
 
 export type DashboardAccess = {
-  supabase: never;
   userId: string;
   email: string | undefined;
   role: "buyer" | "seller" | "admin";
@@ -21,13 +20,11 @@ export async function getDashboardAccess(): Promise<DashboardAccess | null> {
   const session = await getAuthenticatedSession();
   if (!session) return null;
 
-  const supabase = null as never;
   const role = session.appUser.role;
-  const shop = await getOwnedShop(supabase, session.authUser.id);
+  const shop = await getOwnedShop(session.authUser.id);
 
   if (role === "buyer") {
     return {
-      supabase,
       userId: session.authUser.id,
       email: session.authUser.email,
       role,
@@ -43,7 +40,6 @@ export async function getDashboardAccess(): Promise<DashboardAccess | null> {
   const mode: DashboardAccessMode = isOwner ? "owner" : isAdmin ? "admin-readonly" : "seller-no-shop";
 
   return {
-    supabase,
     userId: session.authUser.id,
     email: session.authUser.email,
     role,

@@ -17,7 +17,6 @@ type ShopSearchRow = GuideShopRec & { created_at: string };
 type ProductSearchRow = GuideProductRec & { created_at: string; tags: string[] };
 
 export async function searchGuideCatalog(
-  _legacyClient: unknown,
   query: string,
   keywords: string[]
 ): Promise<GuideRecommendations> {

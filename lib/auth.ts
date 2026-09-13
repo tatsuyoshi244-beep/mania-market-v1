@@ -17,14 +17,14 @@ export async function requireAuth(redirectTo: Route = "/dashboard"): Promise<Aut
   return user;
 }
 
-export async function getAppUser(_client: unknown, userId: string) {
+export async function getAppUser(userId: string) {
   return queryOne<User>("select * from public.users where id = $1", [userId]);
 }
 
 export async function getAuthenticatedSession(): Promise<AuthenticatedSession | null> {
   const authUser = await getAuthUser();
   if (!authUser) return null;
-  const appUser = await ensureAppUser(null, authUser);
+  const appUser = await ensureAppUser(authUser);
   return { authUser, appUser };
 }
 
@@ -40,7 +40,7 @@ export async function requireSellerSession(redirectTo: Route = "/dashboard"): Pr
   return session as SellerSession;
 }
 
-export async function ensureAppUser(_client: unknown, authUser: AuthUser) {
+export async function ensureAppUser(authUser: AuthUser) {
   const user = await queryOne<User>(
     `insert into public.users (id, email, display_name)
      values ($1, $2, $3)
@@ -54,7 +54,6 @@ export async function ensureAppUser(_client: unknown, authUser: AuthUser) {
 }
 
 export async function upsertSellerRolePreservingAdmin(
-  _client: unknown,
   userId: string,
   fields?: { display_name?: string | null }
 ) {

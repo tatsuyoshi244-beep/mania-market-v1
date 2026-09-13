@@ -4,7 +4,7 @@ import { buildMarketingSuggestions } from "@/lib/concierge/marketing";
 import { queryOne, queryRows } from "@/lib/neon/db";
 import type { ConciergeContext, ConciergePayload } from "@/types/concierge";
 
-export async function loadConciergeContext(_legacyClient: unknown, userId: string): Promise<ConciergeContext> {
+export async function loadConciergeContext(userId: string): Promise<ConciergeContext> {
   const shop = await queryOne<NonNullable<ConciergeContext["shop"]> & { id: string }>(
     `select id::text, slug, name, description, website_url, logo_url, cover_image_url,
             twitter_url, instagram_url, is_published
@@ -37,15 +37,15 @@ export async function loadConciergeContext(_legacyClient: unknown, userId: strin
   };
 }
 
-export async function fetchPopularTags(_legacyClient?: unknown) {
+export async function fetchPopularTags() {
   return queryRows<{ tag: string; count: number }>(
     `select lower(tag) as tag,count(*)::int as count from public.product_tags
      group by lower(tag) order by count desc limit 100`
   );
 }
 
-export async function loadConciergePayload(legacyClient: unknown, userId: string): Promise<ConciergePayload> {
-  const context = await loadConciergeContext(legacyClient, userId);
+export async function loadConciergePayload(userId: string): Promise<ConciergePayload> {
+  const context = await loadConciergeContext(userId);
   const diagnosis = diagnoseShop(context);
   const actions = buildConciergeActions(context, diagnosis);
   const popularTags = await fetchPopularTags();

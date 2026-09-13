@@ -28,6 +28,7 @@ import { verifyTurnstileToken } from "@/lib/security/turnstile";
 import { recordAnalyticsEvent } from "@/lib/analytics";
 import { getNeonAuth } from "@/lib/neon/auth";
 import { queryOne, queryRows } from "@/lib/neon/db";
+import { safeInternalRoute } from "@/lib/navigation";
 
 function throwDbError(context: string, error: unknown): never {
   logServerError(context, error);
@@ -39,8 +40,41 @@ function text(formData: FormData, key: string) {
   return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
-function loginRedirect(returnTo: string): Route {
-  return `/login?next=${encodeURIComponent(returnTo)}` as Route;
+function httpUrl(formData: FormData, key: string, required = false) {
+  const value = text(formData, key);
+  if (!value) {
+    if (required) throw new Error(`${key}を入力してください。`);
+    return null;
+  }
+
+  try {
+    const url = new URL(value);
+    if ((url.protocol !== "https:" && url.protocol !== "http:") || url.username || url.password) {
+      throw new Error();
+    }
+    return url.toString();
+  } catch {
+    throw new Error("URLは http:// または https:// から正しく入力してください。");
+  }
+}
+
+function shopSlug(formData: FormData) {
+  const value = text(formData, "slug")?.toLowerCase();
+  if (!value || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value)) {
+    throw new Error("slugは半角英数字とハイフンで入力してください。");
+  }
+  return value;
+}
+
+function uuid(formData: FormData, key: string): string;
+function uuid(formData: FormData, key: string, required: false): string | null;
+function uuid(formData: FormData, key: string, required = true): string | null {
+  const value = text(formData, key);
+  if (!value && !required) return null;
+  if (!value || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)) {
+    throw new Error("送信されたIDが不正です。ページを再読み込みしてください。");
+  }
+  return value;
 }
 
 function revalidateSocialPaths(returnTo: string) {
@@ -54,27 +88,23 @@ function revalidateSocialPaths(returnTo: string) {
 }
 
 async function guardProductOps(userId: string) {
-  await enforceRateLimit(null, "product_ops", userId);
-  return { service: null, ctx: await getRequestClientContext() };
+  await enforceRateLimit("product_ops", userId);
+  return { ctx: await getRequestClientContext() };
 }
 
 async function guardSocialOps(userId: string) {
-  await queryRows(
-    `insert into public.rate_limit_events (bucket, subject_hash) values ('social_ops', $1)
-     returning id`,
-    [userId]
-  );
+  await enforceRateLimit("social_ops", userId);
 }
 
 async function guardAdminOps(userId: string) {
-  await enforceRateLimit(null, "admin_ops", userId);
-  return { service: null, ctx: await getRequestClientContext() };
+  await enforceRateLimit("admin_ops", userId);
+  return { ctx: await getRequestClientContext() };
 }
 
 async function guardApplicationSubmit(userId: string | null) {
   const ctx = await getRequestClientContext();
   const subject = userId ?? `ip:${ctx.ipHash}`;
-  await enforceRateLimit(null, "application_submit", subject);
+  await enforceRateLimit("application_submit", subject);
   return { ctx };
 }
 
@@ -83,10 +113,10 @@ export async function signIn(formData: FormData) {
   const password = text(formData, "password");
   if (!email) throw new Error("メールアドレスを入力してください。");
   if (!password) throw new Error("パスワードを入力してください。");
-  const redirectTo = text(formData, "redirect_to") ?? "/mypage";
+  const redirectTo = safeInternalRoute(text(formData, "redirect_to"), "/mypage");
   const { error } = await getNeonAuth().signIn.email({ email, password });
   if (error) throwDbError("serverAction", error);
-  redirect((redirectTo.startsWith("/") ? redirectTo : `/${redirectTo}`) as Route);
+  redirect(redirectTo);
 }
 
 export async function signUp(formData: FormData) {
@@ -97,7 +127,7 @@ export async function signUp(formData: FormData) {
   if (password.length < 8) throw new Error("パスワードは8文字以上で入力してください。");
   const { error } = await getNeonAuth().signUp.email({ email, password, name });
   if (error) throwDbError("signUp", error);
-  redirect("/mypage");
+  redirect(safeInternalRoute(text(formData, "redirect_to"), "/mypage"));
 }
 
 export async function signOut() {
@@ -107,20 +137,20 @@ export async function signOut() {
 
 export async function saveShop(formData: FormData) {
   const authUser = await requireAuth();
-  await ensureAppUser(null, authUser);
+  await ensureAppUser(authUser);
 
-  const slug = text(formData, "slug");
+  const slug = shopSlug(formData);
   const name = text(formData, "name");
-  if (!slug || !name) throw new Error("ショップ名とslugは必須です。");
+  if (!name) throw new Error("ショップ名は必須です。");
 
-  await upsertSellerRolePreservingAdmin(null, authUser.id, {
+  await upsertSellerRolePreservingAdmin(authUser.id, {
     display_name: authUser.email
   });
 
-  const shopId = text(formData, "shop_id");
-  const values = [authUser.id, slug, name, text(formData, "description"), text(formData, "website_url"),
-    text(formData, "logo_url"), text(formData, "cover_image_url"), text(formData, "twitter_url"),
-    text(formData, "instagram_url"), text(formData, "location"), formData.get("is_published") === "on"];
+  const shopId = uuid(formData, "shop_id", false);
+  const values = [authUser.id, slug, name, text(formData, "description"), httpUrl(formData, "website_url"),
+    httpUrl(formData, "logo_url"), httpUrl(formData, "cover_image_url"), httpUrl(formData, "twitter_url"),
+    httpUrl(formData, "instagram_url"), text(formData, "location"), formData.get("is_published") === "on"];
   const saved = shopId
     ? await queryOne<{ id: string }>(
         `update public.shops set owner_id=$1,slug=$2,name=$3,description=$4,website_url=$5,logo_url=$6,
@@ -131,7 +161,7 @@ export async function saveShop(formData: FormData) {
          (owner_id,slug,name,description,website_url,logo_url,cover_image_url,twitter_url,instagram_url,location,is_published)
          values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) returning id::text`, values);
   if (!saved) throw new Error("ショップを保存できませんでした。");
-  await syncShopCategories(null, saved.id, parseCategoryIds(formData));
+  await syncShopCategories(saved.id, parseCategoryIds(formData));
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/shop");
@@ -145,15 +175,11 @@ function parseUiStatus(formData: FormData): ProductUiStatus {
 }
 
 function parseCategoryId(formData: FormData) {
-  return text(formData, "category_id");
+  return uuid(formData, "category_id", false);
 }
 
-async function requireOwnedShopId(
-  client: unknown,
-  ownerId: string,
-  shopId: string
-) {
-  const shop = await getOwnedShop(client, ownerId);
+async function requireOwnedShopId(ownerId: string, shopId: string) {
+  const shop = await getOwnedShop(ownerId);
   if (!shop || shop.id !== shopId) {
     throw new Error("自分のショップのみ操作できます。");
   }
@@ -163,16 +189,16 @@ async function requireOwnedShopId(
 export async function createProduct(formData: FormData) {
   const authUser = await requireAuth("/dashboard/products/new" as Route);
 
-  const shopId = text(formData, "shop_id");
+  const shopId = uuid(formData, "shop_id");
   const name = text(formData, "name");
-  const externalUrl = text(formData, "external_url");
+  const externalUrl = httpUrl(formData, "external_url", true);
   if (!shopId || !name || !externalUrl) {
     throw new Error("ショップ、商品名、外部販売URLは必須です。");
   }
 
-  await requireOwnedShopId(null, authUser.id, shopId);
-  await assertCanCreateProduct(null, authUser.id);
-  const { service, ctx } = await guardProductOps(authUser.id);
+  await requireOwnedShopId(authUser.id, shopId);
+  await assertCanCreateProduct(authUser.id);
+  const { ctx } = await guardProductOps(authUser.id);
   const uiStatus = parseUiStatus(formData);
 
   const product = await queryOne<{ id: string }>(
@@ -180,11 +206,11 @@ export async function createProduct(formData: FormData) {
      (seller_id,shop_id,name,description,price_label,external_url,image_url,category_id,status)
      values ($1,$2,$3,$4,$5,$6,$7,$8,$9) returning id::text`,
     [authUser.id,shopId,name,text(formData,"description"),text(formData,"price_label"),externalUrl,
-      text(formData,"image_url"),parseCategoryId(formData),toDbProductStatus(uiStatus)]
+      httpUrl(formData,"image_url"),parseCategoryId(formData),toDbProductStatus(uiStatus)]
   );
   if (!product) throw new Error("商品を作成できませんでした。");
-  await syncProductTags(null, product.id, parseProductTags(text(formData, "tags")));
-  await writeAuditLog(service, {
+  await syncProductTags(product.id, parseProductTags(text(formData, "tags")));
+  await writeAuditLog({
     userId: authUser.id,
     action: "seller_create_product",
     targetType: "product",
@@ -203,31 +229,31 @@ export async function createProduct(formData: FormData) {
 export async function updateProduct(formData: FormData) {
   const authUser = await requireAuth("/dashboard/products" as Route);
 
-  const productId = text(formData, "product_id");
-  const shopId = text(formData, "shop_id");
+  const productId = uuid(formData, "product_id");
+  const shopId = uuid(formData, "shop_id");
   const name = text(formData, "name");
-  const externalUrl = text(formData, "external_url");
+  const externalUrl = httpUrl(formData, "external_url", true);
   if (!productId || !shopId || !name || !externalUrl) {
     throw new Error("商品情報が不正です。");
   }
 
-  const existing = await getSellerProduct(null, productId, authUser.id);
+  const existing = await getSellerProduct(productId, authUser.id);
   if (!existing || existing.shop_id !== shopId) {
     throw new Error("編集権限がありません。");
   }
 
-  const { service, ctx } = await guardProductOps(authUser.id);
+  const { ctx } = await guardProductOps(authUser.id);
   const uiStatus = parseUiStatus(formData);
 
   const updated = await queryOne<{ id: string }>(
     `update public.products set name=$1,description=$2,price_label=$3,external_url=$4,image_url=$5,
      category_id=$6,status=$7,updated_at=now() where id=$8 and seller_id=$9 returning id::text`,
-    [name,text(formData,"description"),text(formData,"price_label"),externalUrl,text(formData,"image_url"),
+    [name,text(formData,"description"),text(formData,"price_label"),externalUrl,httpUrl(formData,"image_url"),
       parseCategoryId(formData),toDbProductStatus(uiStatus),productId,authUser.id]
   );
   if (!updated) throw new Error("商品を更新できませんでした。");
-  await syncProductTags(null, productId, parseProductTags(text(formData, "tags")));
-  await writeAuditLog(service, {
+  await syncProductTags(productId, parseProductTags(text(formData, "tags")));
+  await writeAuditLog({
     userId: authUser.id,
     action: "seller_update_product",
     targetType: "product",
@@ -245,17 +271,16 @@ export async function updateProduct(formData: FormData) {
 
 export async function updateProductStatus(formData: FormData) {
   const authUser = await requireAuth("/dashboard/products" as Route);
-  const id = text(formData, "product_id");
-  if (!id) throw new Error("商品IDがありません。");
+  const id = uuid(formData, "product_id");
 
-  const existing = await getSellerProduct(null, id, authUser.id);
+  const existing = await getSellerProduct(id, authUser.id);
   if (!existing) throw new Error("編集権限がありません。");
 
-  const { service, ctx } = await guardProductOps(authUser.id);
+  const { ctx } = await guardProductOps(authUser.id);
   const dbStatus = toDbProductStatus(parseUiStatus(formData));
 
   await queryRows("update public.products set status=$1,updated_at=now() where id=$2 and seller_id=$3 returning id", [dbStatus,id,authUser.id]);
-  await writeAuditLog(service, {
+  await writeAuditLog({
     userId: authUser.id,
     action: "seller_update_product",
     targetType: "product",
@@ -270,16 +295,15 @@ export async function updateProductStatus(formData: FormData) {
 
 export async function deleteProduct(formData: FormData) {
   const authUser = await requireAuth("/dashboard/products" as Route);
-  const id = text(formData, "product_id");
-  if (!id) throw new Error("商品IDがありません。");
+  const id = uuid(formData, "product_id");
 
-  const existing = await getSellerProduct(null, id, authUser.id);
+  const existing = await getSellerProduct(id, authUser.id);
   if (!existing) throw new Error("削除権限がありません。");
 
-  const { service, ctx } = await guardProductOps(authUser.id);
+  const { ctx } = await guardProductOps(authUser.id);
 
   await queryRows("delete from public.products where id=$1 and seller_id=$2 returning id", [id,authUser.id]);
-  await writeAuditLog(service, {
+  await writeAuditLog({
     userId: authUser.id,
     action: "seller_delete_product",
     targetType: "product",
@@ -294,12 +318,11 @@ export async function deleteProduct(formData: FormData) {
 }
 
 export async function toggleFavoriteProduct(formData: FormData) {
-  const returnTo = text(formData, "return_to") ?? "/products";
-  const authUser = await requireAuth(loginRedirect(returnTo));
-  await ensureAppUser(null, authUser);
+  const returnTo = safeInternalRoute(text(formData, "return_to"), "/products");
+  const authUser = await requireAuth(returnTo);
+  await ensureAppUser(authUser);
 
-  const productId = text(formData, "product_id");
-  if (!productId) return;
+  const productId = uuid(formData, "product_id");
 
   await guardSocialOps(authUser.id);
   const active = formData.get("active") === "true";
@@ -308,7 +331,10 @@ export async function toggleFavoriteProduct(formData: FormData) {
     await queryRows("delete from public.favorites where user_id = $1 and product_id = $2 returning id", [authUser.id, productId]);
   } else {
     await queryRows(
-      `insert into public.favorites (user_id, product_id, shop_id) values ($1, $2, null)
+      `insert into public.favorites (user_id, product_id, shop_id)
+       select $1, p.id, null from public.products p
+       join public.shops s on s.id=p.shop_id
+       where p.id=$2::uuid and p.status='active' and s.is_published=true
        on conflict (user_id, product_id) where product_id is not null do nothing returning id`,
       [authUser.id, productId]
     );
@@ -319,12 +345,11 @@ export async function toggleFavoriteProduct(formData: FormData) {
 }
 
 export async function toggleFavoriteShop(formData: FormData) {
-  const returnTo = text(formData, "return_to") ?? "/shops";
-  const authUser = await requireAuth(loginRedirect(returnTo));
-  await ensureAppUser(null, authUser);
+  const returnTo = safeInternalRoute(text(formData, "return_to"), "/shops");
+  const authUser = await requireAuth(returnTo);
+  await ensureAppUser(authUser);
 
-  const shopId = text(formData, "shop_id");
-  if (!shopId) return;
+  const shopId = uuid(formData, "shop_id");
 
   await guardSocialOps(authUser.id);
   const active = formData.get("active") === "true";
@@ -333,7 +358,8 @@ export async function toggleFavoriteShop(formData: FormData) {
     await queryRows("delete from public.favorites where user_id = $1 and shop_id = $2 returning id", [authUser.id, shopId]);
   } else {
     await queryRows(
-      `insert into public.favorites (user_id, shop_id, product_id) values ($1, $2, null)
+      `insert into public.favorites (user_id, shop_id, product_id)
+       select $1, s.id, null from public.shops s where s.id=$2::uuid and s.is_published=true
        on conflict (user_id, shop_id) where shop_id is not null do nothing returning id`,
       [authUser.id, shopId]
     );
@@ -344,12 +370,11 @@ export async function toggleFavoriteShop(formData: FormData) {
 }
 
 export async function toggleFollowShop(formData: FormData) {
-  const returnTo = text(formData, "return_to") ?? "/shops";
-  const authUser = await requireAuth(loginRedirect(returnTo));
-  await ensureAppUser(null, authUser);
+  const returnTo = safeInternalRoute(text(formData, "return_to"), "/shops");
+  const authUser = await requireAuth(returnTo);
+  await ensureAppUser(authUser);
 
-  const shopId = text(formData, "shop_id");
-  if (!shopId) return;
+  const shopId = uuid(formData, "shop_id");
 
   await guardSocialOps(authUser.id);
   const active = formData.get("active") === "true";
@@ -358,7 +383,8 @@ export async function toggleFollowShop(formData: FormData) {
     await queryRows("delete from public.follows where user_id = $1 and shop_id = $2 returning shop_id", [authUser.id, shopId]);
   } else {
     await queryRows(
-      `insert into public.follows (user_id, shop_id) values ($1, $2)
+      `insert into public.follows (user_id, shop_id)
+       select $1, s.id from public.shops s where s.id=$2::uuid and s.is_published=true
        on conflict (user_id, shop_id) do nothing returning shop_id`, [authUser.id, shopId]);
     await recordAnalyticsEvent({ type: "follow_add", shopId, userId: authUser.id });
   }
@@ -415,9 +441,9 @@ export async function submitPartnerApplication(formData: FormData) {
     owner_name,
     email,
     region: text(formData, "region"),
-    website_url: text(formData, "website_url"),
-    instagram_url: text(formData, "instagram_url"),
-    x_url: text(formData, "x_url"),
+    website_url: httpUrl(formData, "website_url"),
+    instagram_url: httpUrl(formData, "instagram_url"),
+    x_url: httpUrl(formData, "x_url"),
     description: text(formData, "description"),
     mission: text(formData, "mission"),
     target_user: text(formData, "target_user"),
@@ -426,14 +452,14 @@ export async function submitPartnerApplication(formData: FormData) {
 
   const inserted = await queryRows<{ id: string }>(
     `insert into public.partner_applications
-     (shop_name, owner_name, email, region, website_url, instagram_url, x_url,
+     (user_id, shop_name, owner_name, email, region, website_url, instagram_url, x_url,
       description, mission, target_user, categories, status, ai_score, ai_specialty,
       ai_originality, ai_passion, ai_safety, ai_recommendation, ai_comment, ai_checked_at)
-     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'pending',$12,$13,$14,$15,$16,$17,$18,$19)
+     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,'pending',$13,$14,$15,$16,$17,$18,$19,$20)
      returning id::text`,
     [
-      shop_name, owner_name, email, text(formData, "region"), text(formData, "website_url"),
-      text(formData, "instagram_url"), text(formData, "x_url"), text(formData, "description"),
+      authUser?.id ?? null, shop_name, owner_name, email, text(formData, "region"), httpUrl(formData, "website_url"),
+      httpUrl(formData, "instagram_url"), httpUrl(formData, "x_url"), text(formData, "description"),
       text(formData, "mission"), text(formData, "target_user"), categories, aiReview.ai_score,
       aiReview.ai_specialty, aiReview.ai_originality, aiReview.ai_passion, aiReview.ai_safety,
       aiReview.ai_recommendation, aiReview.ai_comment, aiReview.ai_checked_at
@@ -442,7 +468,7 @@ export async function submitPartnerApplication(formData: FormData) {
   const insertedId = inserted[0]?.id;
   if (!insertedId) throw new Error("申請を保存できませんでした。");
 
-  await writeAuditLog(null, {
+  await writeAuditLog({
     userId: authUser?.id ?? null,
     action: "application_submit",
     targetType: "partner_application",
@@ -460,7 +486,7 @@ export async function submitPartnerApplication(formData: FormData) {
 
 async function adminPartnerContext() {
   const authUser = await requireAuth("/admin/partner-applications" as Route);
-  await requireAdminUser(null, authUser.id);
+  await requireAdminUser(authUser.id);
   return { authUser };
 }
 
@@ -469,9 +495,7 @@ function reviewNote(formData: FormData) {
 }
 
 function applicationId(formData: FormData) {
-  const id = text(formData, "application_id");
-  if (!id) throw new Error("申請IDが不正です。");
-  return id;
+  return uuid(formData, "application_id");
 }
 
 export async function setPartnerApplicationReviewing(formData: FormData) {
@@ -483,10 +507,10 @@ export async function setPartnerApplicationReviewing(formData: FormData) {
 
 export async function approvePartnerApplication(formData: FormData) {
   const { authUser } = await adminPartnerContext();
-  const { service, ctx } = await guardAdminOps(authUser.id);
+  const { ctx } = await guardAdminOps(authUser.id);
   const id = applicationId(formData);
   await queryRows("update public.partner_applications set status='approved',review_note=$1,reviewed_at=now(),approved_at=now() where id=$2 returning id", [reviewNote(formData),id]);
-  await writeAuditLog(service, {
+  await writeAuditLog({
     userId: authUser.id,
     action: "admin_approve_application",
     targetType: "partner_application",
@@ -500,10 +524,10 @@ export async function approvePartnerApplication(formData: FormData) {
 
 export async function rejectPartnerApplication(formData: FormData) {
   const { authUser } = await adminPartnerContext();
-  const { service, ctx } = await guardAdminOps(authUser.id);
+  const { ctx } = await guardAdminOps(authUser.id);
   const id = applicationId(formData);
   await queryRows("update public.partner_applications set status='rejected',review_note=$1,reviewed_at=now(),approved_at=null where id=$2 returning id", [reviewNote(formData),id]);
-  await writeAuditLog(service, {
+  await writeAuditLog({
     userId: authUser.id,
     action: "admin_reject_application",
     targetType: "partner_application",
@@ -524,10 +548,10 @@ export async function savePartnerApplicationReviewNote(formData: FormData) {
 
 export async function publishPartnerApplication(formData: FormData) {
   const { authUser } = await adminPartnerContext();
-  const { service, ctx } = await guardAdminOps(authUser.id);
+  const { ctx } = await guardAdminOps(authUser.id);
   const id = applicationId(formData);
-  const result = await publishPartnerApplicationShop(service, id);
-  await writeAuditLog(service, {
+  const result = await publishPartnerApplicationShop(id);
+  await writeAuditLog({
     userId: authUser.id,
     action: "admin_publish_shop",
     targetType: "shop",
@@ -546,8 +570,7 @@ export async function claimPartnerShop(formData: FormData) {
     throw new Error("メールアドレスが確認できません。");
   }
 
-  const shopId = text(formData, "shop_id");
-  if (!shopId) throw new Error("ショップIDが不正です。");
+  const shopId = uuid(formData, "shop_id");
 
   const shop = await queryOne<{id:string;owner_id:string|null;pending_owner_email:string|null}>(
     "select id::text,owner_id,pending_owner_email from public.shops where id=$1", [shopId]);
@@ -562,12 +585,12 @@ export async function claimPartnerShop(formData: FormData) {
     throw new Error("このショップを引き継ぐ権限がありません。");
   }
 
-  await ensureAppUser(null, authUser);
-  await claimPendingShop(null, shopId, authUser.id, authUser.email);
+  await ensureAppUser(authUser);
+  await claimPendingShop(shopId, authUser.id, authUser.email);
 
   const ctx = await getRequestClientContext();
-  const applicationIdValue = text(formData, "application_id");
-  await writeAuditLog(null, {
+  const applicationIdValue = uuid(formData, "application_id", false);
+  await writeAuditLog({
     userId: authUser.id,
     action: "seller_claim_shop",
     targetType: "shop",
@@ -615,7 +638,7 @@ export async function adminForceAssignShopOwner(formData: FormData) {
     throw new Error("指定メールのユーザーが見つかりません。先にアカウント登録が必要です。");
   }
 
-  await adminAssignShopOwner(null, shop.id, target.id);
+  await adminAssignShopOwner(shop.id, target.id);
   revalidatePartnerApplicationPaths(id);
   revalidatePath("/dashboard");
   revalidatePath("/shops");

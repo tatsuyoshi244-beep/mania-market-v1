@@ -9,10 +9,7 @@ export function partnerApplicationErrorMessage(error: Error | null) {
   return error ? "データの取得に失敗しました。時間をおいて再度お試しください。" : null;
 }
 
-export async function listMyPartnerApplications(
-  _legacyClient: unknown,
-  email: string
-): Promise<{ data: PartnerApplicationWithShop[]; error: Error | null }> {
+export async function listMyPartnerApplications(email: string): Promise<{ data: PartnerApplicationWithShop[]; error: Error | null }> {
   try {
     const data = await queryRows<PartnerApplicationWithShop>(
       `select pa.*,
@@ -33,7 +30,7 @@ export async function listMyPartnerApplications(
   }
 }
 
-export async function listAllPartnerApplications(_legacyClient?: unknown) {
+export async function listAllPartnerApplications() {
   try {
     return {
       data: await queryRows<PartnerApplication>(

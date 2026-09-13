@@ -2,10 +2,10 @@ import type { ProductLimitInfo } from "@/types/auth";
 import type { PlanKey, Product, Shop } from "@/types/database";
 import { queryOne, queryRows } from "@/lib/neon/db";
 
-export async function getProductLimitInfo(_legacyClient: unknown, sellerId: string): Promise<ProductLimitInfo> {
+export async function getProductLimitInfo(sellerId: string): Promise<ProductLimitInfo> {
   const row = await queryOne<{ plan_key: PlanKey; product_limit: number | null; product_count: number }>(
     `select u.plan_key, pl.product_limit,
-            count(p.id) filter (where p.status in ('draft','active'))::int as product_count
+            count(p.id) filter (where p.status in ('hidden','active'))::int as product_count
      from public.users u
      join public.plans pl on pl.key = u.plan_key
      left join public.products p on p.seller_id = u.id
@@ -24,8 +24,8 @@ export async function getProductLimitInfo(_legacyClient: unknown, sellerId: stri
   };
 }
 
-export async function assertCanCreateProduct(client: unknown, sellerId: string) {
-  const info = await getProductLimitInfo(client, sellerId);
+export async function assertCanCreateProduct(sellerId: string) {
+  const info = await getProductLimitInfo(sellerId);
   if (!info.canCreate) throw new Error("現在のプランの上限に達しました");
 }
 
@@ -34,7 +34,7 @@ export function parseProductTags(raw: string | null): string[] {
   return [...new Set(raw.split(/[,、\s]+/).map((tag) => tag.trim().toLowerCase()).filter(Boolean))];
 }
 
-export async function syncProductTags(_legacyClient: unknown, productId: string, tags: string[]) {
+export async function syncProductTags(productId: string, tags: string[]) {
   await queryRows(`delete from public.product_tags where product_id = $1::uuid returning product_id`, [productId]);
   for (const tag of tags) {
     await queryRows(
@@ -45,7 +45,7 @@ export async function syncProductTags(_legacyClient: unknown, productId: string,
   }
 }
 
-export async function syncShopCategories(_legacyClient: unknown, shopId: string, categoryIds: string[]) {
+export async function syncShopCategories(shopId: string, categoryIds: string[]) {
   await queryRows(`delete from public.shop_categories where shop_id = $1::uuid returning shop_id`, [shopId]);
   for (const categoryId of categoryIds) {
     await queryRows(
@@ -56,11 +56,11 @@ export async function syncShopCategories(_legacyClient: unknown, shopId: string,
   }
 }
 
-export async function getOwnedShop(_legacyClient: unknown, ownerId: string) {
+export async function getOwnedShop(ownerId: string) {
   return queryOne<Shop>(`select * from public.shops where owner_id = $1 limit 1`, [ownerId]);
 }
 
-export async function getSellerProduct(_legacyClient: unknown, productId: string, sellerId: string) {
+export async function getSellerProduct(productId: string, sellerId: string) {
   return queryOne<Product & { product_tags: Array<{ tag: string }> }>(
     `select p.*, coalesce(jsonb_agg(jsonb_build_object('tag', pt.tag))
       filter (where pt.tag is not null), '[]'::jsonb) as product_tags
@@ -70,7 +70,7 @@ export async function getSellerProduct(_legacyClient: unknown, productId: string
   );
 }
 
-export async function listSellerProducts(_legacyClient: unknown, sellerId: string) {
+export async function listSellerProducts(sellerId: string) {
   return queryRows<{
     id: string; name: string; status: Product["status"]; created_at: string;
     external_url: string; category_id: string | null; product_tags: Array<{ tag: string }>;

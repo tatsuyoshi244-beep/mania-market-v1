@@ -5,6 +5,8 @@ import { SearchBox } from "@/components/search-box";
 import { listAllCategories } from "@/lib/queries/categories";
 import { listProducts } from "@/lib/queries/products";
 import { parsePage } from "@/lib/pagination";
+import { getAuthUser } from "@/lib/auth";
+import { getUserSocialState } from "@/lib/queries/social";
 
 export const dynamic = "force-dynamic";
 
@@ -15,11 +17,12 @@ export default async function ProductsPage({
 }) {
   const { q, category, tag, page: pageParam } = await searchParams;
   const page = parsePage(pageParam);
-  const [categories, result] = await Promise.all([
+  const user = await getAuthUser();
+  const [categories, result, social] = await Promise.all([
     listAllCategories(),
-    listProducts(undefined, { page, query: q, categorySlug: category, tag })
+    listProducts({ page, query: q, categorySlug: category, tag }),
+    getUserSocialState(user?.id)
   ]);
-  const social = { favoriteProductIds: new Set<string>() };
 
   return (
     <section className="mx-auto max-w-6xl px-4 py-10">

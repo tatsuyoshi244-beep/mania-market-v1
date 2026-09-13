@@ -9,8 +9,7 @@ export type CategoryRow = {
   sort_order: number;
 };
 
-// Retain the first argument while route call sites move from Supabase to Neon.
-export async function listAllCategories(_legacyClient?: unknown) {
+export async function listAllCategories() {
   try {
     return await queryRows<CategoryRow>(
       `select id::text, slug, name, description, sort_order
@@ -23,10 +22,7 @@ export async function listAllCategories(_legacyClient?: unknown) {
   }
 }
 
-export async function getPopularCategories(
-  _legacyClient?: unknown,
-  limit = 6
-): Promise<QueryResult<CategoryRow[]>> {
+export async function getPopularCategories(limit = 6): Promise<QueryResult<CategoryRow[]>> {
   const source = "categories.getPopularCategories";
   try {
     const data = await queryRows<CategoryRow>(
@@ -42,9 +38,7 @@ export async function getPopularCategories(
   }
 }
 
-export async function getCategoryShopCounts(
-  _legacyClient?: unknown
-): Promise<QueryResult<Map<string, number>>> {
+export async function getCategoryShopCounts(): Promise<QueryResult<Map<string, number>>> {
   const source = "shop_categories.getCategoryShopCounts";
   const fallback = new Map<string, number>();
   try {
@@ -59,7 +53,7 @@ export async function getCategoryShopCounts(
   }
 }
 
-export async function getCategoryBySlug(_legacyClient: unknown, slug: string) {
+export async function getCategoryBySlug(slug: string) {
   return queryOne<CategoryRow>(
     `select id::text, slug, name, description, sort_order
      from public.categories where slug = $1 limit 1`,
@@ -67,7 +61,7 @@ export async function getCategoryBySlug(_legacyClient: unknown, slug: string) {
   );
 }
 
-export async function getShopIdsForCategory(_legacyClient: unknown, categoryId: string) {
+export async function getShopIdsForCategory(categoryId: string) {
   const rows = await queryRows<{ shop_id: string }>(
     `select shop_id::text from public.shop_categories where category_id = $1::uuid`,
     [categoryId]

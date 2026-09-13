@@ -5,24 +5,22 @@ export type RateLimitProfile =
   | "application_submit"
   | "product_ops"
   | "social_ops"
-  | "admin_ops";
+  | "admin_ops"
+  | "analytics_views";
 
 const RATE_LIMITS: Record<RateLimitProfile, { max: number; windowSeconds: number }> = {
   application_submit: { max: 3, windowSeconds: 3600 },
   product_ops: { max: 30, windowSeconds: 3600 },
   social_ops: { max: 100, windowSeconds: 3600 },
-  admin_ops: { max: 60, windowSeconds: 3600 }
+  admin_ops: { max: 60, windowSeconds: 3600 },
+  analytics_views: { max: 300, windowSeconds: 3600 }
 };
 
 export function buildRateLimitKey(profile: RateLimitProfile, subject: string) {
   return `${profile}:${subject}`;
 }
 
-export async function enforceRateLimit(
-  _legacyClient: unknown,
-  profile: RateLimitProfile,
-  subject: string
-) {
+export async function enforceRateLimit(profile: RateLimitProfile, subject: string) {
   const config = RATE_LIMITS[profile];
   const bucketKey = buildRateLimitKey(profile, subject);
 

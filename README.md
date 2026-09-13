@@ -40,6 +40,7 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3000
 DATABASE_URL=postgresql://...
 VITE_NEON_AUTH_URL=https://...
 NEON_AUTH_BASE_URL=https://...
+NEON_AUTH_COOKIE_SECRET=32文字以上のランダムな文字列
 
 STRIPE_SECRET_KEY=sk_test_xxxxx
 STRIPE_WEBHOOK_SECRET=whsec_xxxxx
@@ -49,12 +50,13 @@ STRIPE_PREMIUM_PRICE_ID=price_xxxxx
 
 ## Neon マイグレーション
 
-Neon SQL Editor で [neon/001_initial_schema.sql](neon/001_initial_schema.sql)、続いて
-[neon/002_complete_platform.sql](neon/002_complete_platform.sql) を実行してください。
+Neon SQL Editor で [neon/001_initial_schema.sql](neon/001_initial_schema.sql)、
+[neon/002_complete_platform.sql](neon/002_complete_platform.sql)、
+[neon/003_product_plan_guards.sql](neon/003_product_plan_guards.sql) の順に実行してください。
 
 このマイグレーションには以下が含まれます。
 
-- `profiles`, `shops`, `products`, `favorites`, `follows`, `analytics_events`
+- `users`, `shops`, `products`, `favorites`, `follows`, `analytics_events`
 - サーバー側の所有者・管理者権限確認
 - 商品数上限の DB トリガー
 - 無料プラン降格時に作成日順で3件だけ `active`、4件目以降を `hidden` にする関数
@@ -99,6 +101,7 @@ Webhook で購読状態が Neon `users` / `subscriptions` に同期されます�
 - `/dashboard/products` 商品管理
 - `/dashboard/billing` Stripe 課金管理
 - `/admin` 管理者ビュー
+- `/api/health` DB・認証・Stripe設定の稼働確認（秘密情報は返しません）
 
 ## 分析イベント
 

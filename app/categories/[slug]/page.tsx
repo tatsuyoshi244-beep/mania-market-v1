@@ -5,6 +5,8 @@ import { getCategoryImageUrl } from "@/lib/category-images";
 import { getCategoryBySlug } from "@/lib/queries/categories";
 import { listProductsByCategory } from "@/lib/queries/products";
 import { listShopsByCategory } from "@/lib/queries/shops";
+import { getAuthUser } from "@/lib/auth";
+import { getUserSocialState } from "@/lib/queries/social";
 
 export const dynamic = "force-dynamic";
 
@@ -14,12 +16,13 @@ export default async function CategoryDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const category = await getCategoryBySlug(undefined, slug);
+  const [category, user] = await Promise.all([getCategoryBySlug(slug), getAuthUser()]);
   if (!category) notFound();
 
-  const [shops, products] = await Promise.all([
-    listShopsByCategory(undefined, category.id),
-    listProductsByCategory(undefined, category.id)
+  const [shops, products, social] = await Promise.all([
+    listShopsByCategory(category.id),
+    listProductsByCategory(category.id),
+    getUserSocialState(user?.id)
   ]);
 
   const imageUrl = getCategoryImageUrl(slug);
@@ -45,7 +48,13 @@ export default async function CategoryDetailPage({
           ) : (
             <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               {shops.map((shop) => (
-                <ShopCard key={shop.id} shop={shop} />
+                <ShopCard
+                  key={shop.id}
+                  shop={shop}
+                  returnTo={`/categories/${slug}`}
+                  isFavoriteShop={social.favoriteShopIds.has(shop.id)}
+                  isFollowing={social.followingShopIds.has(shop.id)}
+                />
               ))}
             </div>
           )}
@@ -58,7 +67,12 @@ export default async function CategoryDetailPage({
           ) : (
             <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {products.map((product) => (
-                <ProductCard key={product.id} product={product} />
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  isFavorited={social.favoriteProductIds.has(product.id)}
+                  returnTo={`/categories/${slug}`}
+                />
               ))}
             </div>
           )}

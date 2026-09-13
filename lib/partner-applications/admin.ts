@@ -3,7 +3,7 @@ import { queryOne } from "@/lib/neon/db";
 
 type PartnerApplication = Database["public"]["Tables"]["partner_applications"]["Row"];
 
-export async function requireAdminUser(_client: unknown, userId: string) {
+export async function requireAdminUser(userId: string) {
   const user = await queryOne<{ id: string; role: string }>(
     "select id, role from public.users where id = $1 limit 1",
     [userId]
@@ -12,7 +12,7 @@ export async function requireAdminUser(_client: unknown, userId: string) {
   return user;
 }
 
-export async function getPartnerApplicationById(_client: unknown, id: string) {
+export async function getPartnerApplicationById(id: string) {
   return queryOne<PartnerApplication>(
     "select * from public.partner_applications where id = $1 limit 1",
     [id]

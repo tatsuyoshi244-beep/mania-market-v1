@@ -24,7 +24,7 @@ export default async function AdminPartnerApplicationDetailPage({ params }: Page
   }
 
   try {
-    await requireAdminUser(null, user.id);
+    await requireAdminUser(user.id);
   } catch {
     return (
       <section className="mx-auto max-w-3xl px-4 py-10">
@@ -36,7 +36,7 @@ export default async function AdminPartnerApplicationDetailPage({ params }: Page
     );
   }
 
-  const application = await getPartnerApplicationById(null, id);
+  const application = await getPartnerApplicationById(id);
   if (!application) notFound();
 
   let shopSlug: string | null = null;

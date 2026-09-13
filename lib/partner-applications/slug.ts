@@ -7,7 +7,7 @@ export function slugifyShopName(name: string) {
   return `shop-${Date.now().toString(36)}`;
 }
 
-export async function ensureUniqueShopSlug(_client: unknown, baseSlug: string) {
+export async function ensureUniqueShopSlug(baseSlug: string) {
   let slug = baseSlug;
   let suffix = 2;
   while (await queryOne("select id from public.shops where slug=$1", [slug])) {

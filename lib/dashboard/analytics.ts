@@ -65,10 +65,7 @@ function parseTopPages(value: Json | undefined): TopPageRow[] {
     .filter((row): row is TopPageRow => row !== null);
 }
 
-export async function getShopAnalyticsSummary(
-  _legacyClient: unknown,
-  shopId: string
-): Promise<ShopAnalyticsSummary> {
+export async function getShopAnalyticsSummary(shopId: string): Promise<ShopAnalyticsSummary> {
   const payload = await queryOne<Record<string, Json | undefined>>(
     `select
       (select count(*)::int from public.analytics_events where shop_id=$1::uuid

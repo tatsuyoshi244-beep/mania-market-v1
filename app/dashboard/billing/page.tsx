@@ -4,6 +4,7 @@ import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { PLANS } from "@/lib/plans";
 import { getBillingSummary } from "@/lib/billing/queries";
 import { requireDashboardAccess } from "@/lib/dashboard/access";
+import { isDevelopment } from "@/lib/env";
 
 export const metadata = { title: "プラン管理 — Mania Market" };
 
@@ -13,7 +14,7 @@ type BillingPageProps = {
 
 export default async function BillingPage({ searchParams }: BillingPageProps) {
   const access = await requireDashboardAccess("/dashboard/billing");
-  const summary = await getBillingSummary(access.supabase, access.userId);
+  const summary = await getBillingSummary(access.userId);
   const params = await searchParams;
   const limitLabel = summary.limitInfo.limit === null ? "無制限" : `${summary.limitInfo.limit}件`;
   const remainingLabel = summary.limitInfo.remaining === null ? "無制限" : `${summary.limitInfo.remaining}件`;
@@ -49,7 +50,7 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
 
       <div className="mt-8 flex flex-wrap items-center gap-4">
         {summary.stripeCustomerId ? <BillingPortalButton /> : null}
-        <p className="text-xs text-ink/50">テストカード: 4242 4242 4242 4242</p>
+        {isDevelopment() ? <p className="text-xs text-ink/50">テストカード: 4242 4242 4242 4242</p> : null}
       </div>
 
       <div className="mt-10">

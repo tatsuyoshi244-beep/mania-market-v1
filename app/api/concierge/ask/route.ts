@@ -26,7 +26,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: `question must be ${MAX_LENGTH} chars or less` }, { status: 400 });
   }
 
-  const context = await loadConciergeContext(null, user.id);
+  const context = await loadConciergeContext(user.id);
   const provider = getConciergeProvider();
   const result = await provider.answerQuestion(question, context);
 

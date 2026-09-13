@@ -30,10 +30,7 @@ const shopProjection = `
     where sc.shop_id = s.id
   ), '[]'::jsonb) as shop_categories`;
 
-export async function getPopularShops(
-  _legacyClient?: unknown,
-  limit = 6
-): Promise<QueryResult<HomeShop[]>> {
+export async function getPopularShops(limit = 6): Promise<QueryResult<HomeShop[]>> {
   const source = "shops.getPopularShops";
   try {
     const data = await queryRows<HomeShop>(
@@ -51,7 +48,6 @@ export async function getPopularShops(
 }
 
 export async function listShops(
-  _legacyClient: unknown,
   options: { page: number; query?: string; categorySlug?: string }
 ) {
   const { page, query, categorySlug } = options;
@@ -90,7 +86,7 @@ export async function listShops(
   return { shops, total, page, totalPages: totalPages(total, SHOP_PAGE_SIZE) };
 }
 
-export async function getShopBySlug(_legacyClient: unknown, slug: string) {
+export async function getShopBySlug(slug: string) {
   return queryOne<HomeShop>(
     `select ${shopProjection}
      from public.shops s
@@ -100,7 +96,7 @@ export async function getShopBySlug(_legacyClient: unknown, slug: string) {
   );
 }
 
-export async function listShopsByCategory(_legacyClient: unknown, categoryId: string) {
+export async function listShopsByCategory(categoryId: string) {
   return queryRows<HomeShop>(
     `select ${shopProjection}
      from public.shops s

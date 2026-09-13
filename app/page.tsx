@@ -59,7 +59,7 @@ export default async function HomePage() {
 
   try {
     try {
-      const result = await getPopularCategories(undefined, 6);
+      const result = await getPopularCategories(6);
       categories = result.data;
       if (result.error) queryErrors.push({ source: result.source, error: result.error });
     } catch (error) {
@@ -75,7 +75,7 @@ export default async function HomePage() {
     }
 
     try {
-      const result = await getPopularShops(undefined, 12);
+      const result = await getPopularShops(12);
       shops = result.data;
       if (result.error) queryErrors.push({ source: result.source, error: result.error });
     } catch (error) {
@@ -83,7 +83,7 @@ export default async function HomePage() {
     }
 
     try {
-      const result = await getDiscoverProducts(undefined, 3);
+      const result = await getDiscoverProducts(3);
       discoverProducts = result.data;
       if (result.error) queryErrors.push({ source: result.source, error: result.error });
     } catch (error) {

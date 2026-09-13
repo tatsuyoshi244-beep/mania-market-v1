@@ -23,7 +23,7 @@ export default async function AdminPartnerApplicationsPage() {
   }
 
   try {
-    await requireAdminUser(null, user.id);
+    await requireAdminUser(user.id);
   } catch {
     return (
       <section className="mx-auto max-w-3xl px-4 py-10">

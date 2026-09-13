@@ -36,10 +36,7 @@ const productProjection = `
     'website_url', s.website_url, 'instagram_url', s.instagram_url
   ) as shops`;
 
-export async function getNewProducts(
-  _legacyClient?: unknown,
-  limit = 8
-): Promise<QueryResult<HomeProduct[]>> {
+export async function getNewProducts(limit = 8): Promise<QueryResult<HomeProduct[]>> {
   const source = "products.getNewProducts";
   try {
     const data = await queryRows<HomeProduct>(
@@ -56,7 +53,6 @@ export async function getNewProducts(
 }
 
 export async function listProducts(
-  _legacyClient: unknown,
   options: { page: number; query?: string; categorySlug?: string; tag?: string }
 ) {
   const { page, query, categorySlug, tag } = options;
@@ -104,7 +100,7 @@ export async function listProducts(
   return { products, total, page, totalPages: totalPages(total, PRODUCT_PAGE_SIZE) };
 }
 
-export async function getProductById(_legacyClient: unknown, id: string) {
+export async function getProductById(id: string) {
   return queryOne<HomeProduct>(
     `select ${productProjection}
      from public.products p join public.shops s on s.id = p.shop_id
@@ -114,7 +110,7 @@ export async function getProductById(_legacyClient: unknown, id: string) {
   );
 }
 
-export async function listProductsByShop(_legacyClient: unknown, shopId: string) {
+export async function listProductsByShop(shopId: string) {
   return queryRows<HomeProduct>(
     `select ${productProjection}
      from public.products p join public.shops s on s.id = p.shop_id
@@ -124,7 +120,7 @@ export async function listProductsByShop(_legacyClient: unknown, shopId: string)
   );
 }
 
-export async function listProductsByCategory(_legacyClient: unknown, categoryId: string) {
+export async function listProductsByCategory(categoryId: string) {
   return queryRows<HomeProduct>(
     `select ${productProjection}
      from public.products p join public.shops s on s.id = p.shop_id
@@ -138,10 +134,7 @@ export async function listProductsByCategory(_legacyClient: unknown, categoryId:
   );
 }
 
-export async function getDiscoverProducts(
-  _legacyClient?: unknown,
-  limit = 3
-): Promise<QueryResult<HomeProduct[]>> {
+export async function getDiscoverProducts(limit = 3): Promise<QueryResult<HomeProduct[]>> {
   const source = "products.getDiscoverProducts";
   try {
     const pool = await queryRows<HomeProduct>(

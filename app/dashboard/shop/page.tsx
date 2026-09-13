@@ -8,7 +8,7 @@ export const metadata = { title: "ショップ編集 — Mania Market" };
 
 export default async function DashboardShopPage() {
   const access = await requireDashboardAccess("/dashboard/shop");
-  const categories = await listCategories(access.supabase);
+  const categories = await listCategories();
 
   const selectedCategoryIds = access.shop
     ? (await queryRows<{ category_id: string }>(

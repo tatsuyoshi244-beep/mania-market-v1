@@ -8,7 +8,7 @@ type Application = {
   owner_name:string; categories:string[];
 };
 
-export async function publishPartnerApplicationShop(_client: unknown, applicationId: string) {
+export async function publishPartnerApplicationShop(applicationId: string) {
   const application = await queryOne<Application>("select * from public.partner_applications where id=$1", [applicationId]);
   if (!application) throw new Error("申請が見つかりません。");
   if (application.status !== "approved") throw new Error("承認済みの申請のみ公開できます。");
@@ -16,7 +16,7 @@ export async function publishPartnerApplicationShop(_client: unknown, applicatio
 
   const owner = await queryOne<{ id:string }>("select id from public.users where lower(email)=lower($1) limit 1", [application.email]);
   const ownerId = owner?.id ?? null;
-  const slug = await ensureUniqueShopSlug(null, slugifyShopName(application.shop_name));
+  const slug = await ensureUniqueShopSlug(slugifyShopName(application.shop_name));
   const shop = await queryOne<{id:string;slug:string}>(
     `insert into public.shops
      (slug,name,description,website_url,twitter_url,instagram_url,owner_id,pending_owner_email,is_published,status,plan_key,partner_application_id)
@@ -33,7 +33,7 @@ export async function publishPartnerApplicationShop(_client: unknown, applicatio
       [shop.id,application.categories]
     );
   }
-  if (ownerId) await upsertSellerRolePreservingAdmin(null, ownerId, { display_name: application.owner_name });
+  if (ownerId) await upsertSellerRolePreservingAdmin(ownerId, { display_name: application.owner_name });
   await queryRows(
     `update public.partner_applications set status='published',published_at=now(),reviewed_at=now(),shop_id=$1,
      pending_owner_email=$2 where id=$3 returning id`, [shop.id,ownerId ? null : application.email,application.id]

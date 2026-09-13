@@ -16,7 +16,7 @@ export default async function MypageApplicationsPage() {
 
   const userEmail = user.email;
 
-  const { data: applications, error } = await listMyPartnerApplications(null, userEmail);
+  const { data: applications, error } = await listMyPartnerApplications(userEmail);
   const errorMessage = partnerApplicationErrorMessage(error);
 
   return (

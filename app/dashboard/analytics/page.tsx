@@ -16,7 +16,7 @@ export default async function DashboardAnalyticsPage() {
     );
   }
 
-  const analytics = await getShopAnalyticsSummary(access.supabase, access.shop.id);
+  const analytics = await getShopAnalyticsSummary(access.shop.id);
 
   return (
     <DashboardShell title="アナリティクス" description="閲覧数と人気商品を確認できます。" email={access.email} mode={access.mode} shopName={access.shop.name}>

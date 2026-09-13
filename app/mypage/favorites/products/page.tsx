@@ -6,7 +6,7 @@ export default async function FavoriteProductsPage() {
   const user = await getAuthUser();
   if (!user) return null;
 
-  const products = await listFavoriteProducts(null, user.id);
+  const products = await listFavoriteProducts(user.id);
 
   return (
     <div>

@@ -8,8 +8,8 @@ export default async function FollowingShopsPage() {
   if (!user) return null;
 
   const [shops, social] = await Promise.all([
-    listFollowingShops(null, user.id),
-    getUserSocialState(null, user.id)
+    listFollowingShops(user.id),
+    getUserSocialState(user.id)
   ]);
 
   return (

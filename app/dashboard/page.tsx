@@ -24,7 +24,7 @@ export default async function DashboardPage() {
     );
   }
 
-  const summary = await getDashboardSummary(access.supabase, access.userId, access.shop);
+  const summary = await getDashboardSummary(access.userId, access.shop);
   const limitInfo = summary.limitInfo;
   const hasShopProfile = Boolean(access.shop.description && access.shop.logo_url);
   const hasSocialLinks = Boolean(access.shop.website_url || access.shop.instagram_url || access.shop.twitter_url);

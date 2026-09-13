@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { deleteProduct, updateProductStatus } from "@/app/actions";
+import { updateProductStatus } from "@/app/actions";
+import { DeleteProductForm } from "@/components/dashboard/delete-product-form";
 import { productStatusLabel } from "@/lib/products/status";
 import { asRelatedList } from "@/lib/utils";
 import type { ProductStatus } from "@/types/database";
@@ -36,7 +37,7 @@ export function ProductsTable({ products, readOnly = false }: ProductsTableProps
           <tr>
             <th className="px-4 py-3 font-bold">商品名</th>
             <th className="px-4 py-3 font-bold">カテゴリ</th>
-            <th className="px-4 py-3 font-bold">status</th>
+            <th className="px-4 py-3 font-bold">公開状態</th>
             <th className="px-4 py-3 font-bold">作成日</th>
             <th className="px-4 py-3 font-bold">操作</th>
           </tr>
@@ -68,10 +69,7 @@ export function ProductsTable({ products, readOnly = false }: ProductsTableProps
                           {product.status === "active" ? "非公開" : "公開"}
                         </button>
                       </form>
-                      <form action={deleteProduct}>
-                        <input type="hidden" name="product_id" value={product.id} />
-                        <button type="submit" className="rounded-full border border-cinnabar/25 bg-cinnabar/10 px-3 py-1 text-xs font-bold text-cinnabar">削除</button>
-                      </form>
+                      <DeleteProductForm productId={product.id} productName={product.name} />
                     </div>
                   )}
                 </td>

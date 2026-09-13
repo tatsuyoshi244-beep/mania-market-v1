@@ -48,10 +48,7 @@ export function sanitizeAuditMetadata(metadata: Record<string, Json> = {}) {
   return safe;
 }
 
-export async function writeAuditLog(
-  _legacyClient: unknown,
-  input: WriteAuditLogInput
-) {
+export async function writeAuditLog(input: WriteAuditLogInput) {
   try {
     await queryRows(
       `insert into public.audit_logs

@@ -1,4 +1,5 @@
 import { AuthCard } from "@/components/auth-card";
+import { safeInternalRoute } from "@/lib/navigation";
 
 export default async function LoginPage({
   searchParams
@@ -6,7 +7,7 @@ export default async function LoginPage({
   searchParams: Promise<{ next?: string; sent?: string; error?: string }>;
 }) {
   const { next, sent, error } = await searchParams;
-  const redirectTo = next && next.startsWith("/") ? next : "/mypage";
+  const redirectTo = safeInternalRoute(next, "/mypage");
 
   return (
     <div className="px-4 py-10">

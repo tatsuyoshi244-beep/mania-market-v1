@@ -18,8 +18,8 @@ export default async function DashboardGettingStartedPage() {
   }
 
   const [limitInfo, stats] = await Promise.all([
-    getProductLimitInfo(access.supabase, access.userId),
-    getShopStats(access.supabase, access.shop.id)
+    getProductLimitInfo(access.userId),
+    getShopStats(access.shop.id)
   ]);
 
   const hasShopProfile = Boolean(access.shop.description && access.shop.logo_url);

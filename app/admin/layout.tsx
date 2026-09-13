@@ -15,7 +15,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   }
 
   try {
-    await requireAdminUser(null, user.id);
+    await requireAdminUser(user.id);
   } catch {
     return (
       <AccessDenied

@@ -12,8 +12,8 @@ export const metadata = { title: "商品を登録 — Mania Market" };
 export default async function DashboardProductNewPage() {
   const access = await requireOwnerDashboardAccess("/dashboard/products/new");
   const [categories, limitInfo] = await Promise.all([
-    listCategories(access.supabase),
-    getProductLimitInfo(access.supabase, access.userId)
+    listCategories(),
+    getProductLimitInfo(access.userId)
   ]);
 
   if (!limitInfo.canCreate) {
