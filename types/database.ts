@@ -31,7 +31,8 @@ export type AnalyticsEventType =
   | "product_view"
   | "favorite_add"
   | "follow_add"
-  | "external_click";
+  | "external_click"
+  | "landing_view";
 export type PartnerApplicationStatus =
   | "pending"
   | "reviewing"
@@ -39,6 +40,24 @@ export type PartnerApplicationStatus =
   | "rejected"
   | "published";
 export type ShopLifecycleStatus = "draft" | "pending_owner" | "active" | "suspended";
+export type PartnerLeadStatus =
+  | "candidate"
+  | "ready"
+  | "contacted"
+  | "replied"
+  | "explaining"
+  | "applied"
+  | "published"
+  | "paused"
+  | "declined";
+export type PartnerLeadActivityType =
+  | "note"
+  | "email"
+  | "instagram"
+  | "x"
+  | "phone"
+  | "meeting"
+  | "status_change";
 
 export type Database = {
   public: {
@@ -393,6 +412,10 @@ export type Database = {
           ai_recommendation: string | null;
           ai_comment: string | null;
           ai_checked_at: string | null;
+          acquisition_source: string | null;
+          acquisition_campaign: string | null;
+          referral_code: string | null;
+          partner_lead_id: string | null;
         };
         Insert: {
           id?: string;
@@ -422,8 +445,57 @@ export type Database = {
           ai_recommendation?: string | null;
           ai_comment?: string | null;
           ai_checked_at?: string | null;
+          acquisition_source?: string | null;
+          acquisition_campaign?: string | null;
+          referral_code?: string | null;
+          partner_lead_id?: string | null;
         };
         Update: Partial<Database["public"]["Tables"]["partner_applications"]["Insert"]>;
+        Relationships: [];
+      };
+      partner_leads: {
+        Row: {
+          id: string;
+          invite_token: string;
+          shop_name: string;
+          contact_name: string | null;
+          email: string | null;
+          category: string | null;
+          region: string | null;
+          website_url: string | null;
+          instagram_url: string | null;
+          x_url: string | null;
+          source: string;
+          status: PartnerLeadStatus;
+          priority: number;
+          notes: string | null;
+          next_action_at: string | null;
+          last_contacted_at: string | null;
+          application_id: string | null;
+          published_shop_id: string | null;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["partner_leads"]["Row"]> & { shop_name: string };
+        Update: Partial<Database["public"]["Tables"]["partner_leads"]["Row"]>;
+        Relationships: [];
+      };
+      partner_lead_activities: {
+        Row: {
+          id: string;
+          lead_id: string;
+          activity_type: PartnerLeadActivityType;
+          note: string;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["partner_lead_activities"]["Row"]> & {
+          lead_id: string;
+          activity_type: PartnerLeadActivityType;
+          note: string;
+        };
+        Update: never;
         Relationships: [];
       };
       audit_logs: {
