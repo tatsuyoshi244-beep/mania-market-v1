@@ -10,7 +10,10 @@ export type AuditAction =
   | "seller_update_product"
   | "seller_delete_product"
   | "seller_claim_shop"
-  | "application_submit";
+  | "application_submit"
+  | "admin_create_partner_lead"
+  | "admin_update_partner_lead"
+  | "admin_add_partner_lead_activity";
 
 type WriteAuditLogInput = {
   userId?: string | null;
