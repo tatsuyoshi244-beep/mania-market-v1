@@ -121,15 +121,16 @@ export async function signIn(formData: FormData) {
   if (!email || !password) {
     redirect(authErrorRedirect(redirectTo, "missing_fields", "signin") as Route);
   }
+  let authError: unknown = null;
   try {
-    const { error } = await getNeonAuth().signIn.email({ email, password });
-    if (error) {
-      logServerError("signIn", error);
-      redirect(authErrorRedirect(redirectTo, authErrorCode(error, "auth"), "signin") as Route);
-    }
+    authError = (await getNeonAuth().signIn.email({ email, password })).error;
   } catch (error) {
     logServerError("signIn", error);
     redirect(authErrorRedirect(redirectTo, "auth_unavailable", "signin") as Route);
+  }
+  if (authError) {
+    logServerError("signIn", authError);
+    redirect(authErrorRedirect(redirectTo, authErrorCode(authError, "auth"), "signin") as Route);
   }
   redirect(redirectTo);
 }
@@ -145,15 +146,16 @@ export async function signUp(formData: FormData) {
   if (password.length < 8) {
     redirect(authErrorRedirect(redirectTo, "weak_password", "signup") as Route);
   }
+  let authError: unknown = null;
   try {
-    const { error } = await getNeonAuth().signUp.email({ email, password, name });
-    if (error) {
-      logServerError("signUp", error);
-      redirect(authErrorRedirect(redirectTo, authErrorCode(error, "signup"), "signup") as Route);
-    }
+    authError = (await getNeonAuth().signUp.email({ email, password, name })).error;
   } catch (error) {
     logServerError("signUp", error);
     redirect(authErrorRedirect(redirectTo, "auth_unavailable", "signup") as Route);
+  }
+  if (authError) {
+    logServerError("signUp", authError);
+    redirect(authErrorRedirect(redirectTo, authErrorCode(authError, "signup"), "signup") as Route);
   }
   redirect(redirectTo);
 }
