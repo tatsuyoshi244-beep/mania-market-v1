@@ -15,6 +15,8 @@ import { getDiscoverProducts } from "@/lib/queries/products";
 import { getPopularShops } from "@/lib/queries/shops";
 import { formatDatabaseError } from "@/lib/db/errors";
 
+export const dynamic = "force-dynamic";
+
 const DISCOVERY_LAYOUTS = ["tall", "square", "wide"] as const;
 
 function SectionHeader({

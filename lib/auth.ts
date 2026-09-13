@@ -1,12 +1,12 @@
 import { redirect } from "next/navigation";
 import type { Route } from "next";
-import { neonAuth } from "@/lib/neon/auth";
+import { getNeonAuth } from "@/lib/neon/auth";
 import { queryOne } from "@/lib/neon/db";
 import type { AuthUser, AuthenticatedSession, SellerSession } from "@/types/auth";
 import type { User } from "@/types/database";
 
 export async function getAuthUser(): Promise<AuthUser | null> {
-  const { data: session } = await neonAuth.getSession();
+  const { data: session } = await getNeonAuth().getSession();
   if (!session?.user?.id || !session.user.email) return null;
   return { id: session.user.id, email: session.user.email, name: session.user.name, image: session.user.image };
 }

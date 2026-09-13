@@ -5,6 +5,8 @@ import { FavoriteProductButton } from "@/components/favorite-product-button";
 import { getProductById } from "@/lib/queries/products";
 import { asRelatedList } from "@/lib/utils";
 
+export const dynamic = "force-dynamic";
+
 export default async function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const product = await getProductById(undefined, id);

@@ -26,7 +26,7 @@ import { getRequestClientContext } from "@/lib/security/client-context";
 import { enforceRateLimit } from "@/lib/security/rate-limit";
 import { verifyTurnstileToken } from "@/lib/security/turnstile";
 import { recordAnalyticsEvent } from "@/lib/analytics";
-import { neonAuth } from "@/lib/neon/auth";
+import { getNeonAuth } from "@/lib/neon/auth";
 import { queryOne, queryRows } from "@/lib/neon/db";
 
 function throwDbError(context: string, error: unknown): never {
@@ -84,7 +84,7 @@ export async function signIn(formData: FormData) {
   if (!email) throw new Error("メールアドレスを入力してください。");
   if (!password) throw new Error("パスワードを入力してください。");
   const redirectTo = text(formData, "redirect_to") ?? "/mypage";
-  const { error } = await neonAuth.signIn.email({ email, password });
+  const { error } = await getNeonAuth().signIn.email({ email, password });
   if (error) throwDbError("serverAction", error);
   redirect((redirectTo.startsWith("/") ? redirectTo : `/${redirectTo}`) as Route);
 }
@@ -95,13 +95,13 @@ export async function signUp(formData: FormData) {
   const name = text(formData, "name") ?? email?.split("@")[0];
   if (!email || !password || !name) throw new Error("入力内容を確認してください。");
   if (password.length < 8) throw new Error("パスワードは8文字以上で入力してください。");
-  const { error } = await neonAuth.signUp.email({ email, password, name });
+  const { error } = await getNeonAuth().signUp.email({ email, password, name });
   if (error) throwDbError("signUp", error);
   redirect("/mypage");
 }
 
 export async function signOut() {
-  await neonAuth.signOut();
+  await getNeonAuth().signOut();
   redirect("/");
 }
 

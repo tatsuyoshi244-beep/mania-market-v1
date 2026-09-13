@@ -7,6 +7,8 @@ import { listProductsByShop } from "@/lib/queries/products";
 import { getShopBySlug } from "@/lib/queries/shops";
 import { asRelatedList } from "@/lib/utils";
 
+export const dynamic = "force-dynamic";
+
 export default async function ShopDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const shop = await getShopBySlug(undefined, slug);

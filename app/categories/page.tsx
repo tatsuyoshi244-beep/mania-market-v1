@@ -1,6 +1,8 @@
 import { CategoryCard } from "@/components/category-card";
 import { getCategoryShopCounts, listAllCategories } from "@/lib/queries/categories";
 
+export const dynamic = "force-dynamic";
+
 export default async function CategoriesPage() {
   const [categories, shopCountsResult] = await Promise.all([
     listAllCategories(),

@@ -4,6 +4,8 @@ import { ManiaGuideWidget } from "@/components/mania-guide/mania-guide-widget";
 import { SiteHeader } from "@/components/site-header";
 import "./globals.css";
 
+export const dynamic = "force-dynamic";
+
 const display = Cormorant_Garamond({
   subsets: ["latin"],
   weight: ["500", "600", "700"],

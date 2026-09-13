@@ -1,3 +1,11 @@
-import { neonAuth } from "@/lib/neon/auth";
+import { getNeonAuth } from "@/lib/neon/auth";
 
-export const { GET, POST } = neonAuth.handler();
+type AuthRouteContext = { params: Promise<{ path: string[] }> };
+
+export function GET(request: Request, context: AuthRouteContext) {
+  return getNeonAuth().handler().GET(request, context);
+}
+
+export function POST(request: Request, context: AuthRouteContext) {
+  return getNeonAuth().handler().POST(request, context);
+}

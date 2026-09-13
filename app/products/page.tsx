@@ -6,6 +6,8 @@ import { listAllCategories } from "@/lib/queries/categories";
 import { listProducts } from "@/lib/queries/products";
 import { parsePage } from "@/lib/pagination";
 
+export const dynamic = "force-dynamic";
+
 export default async function ProductsPage({
   searchParams
 }: {
