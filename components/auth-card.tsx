@@ -63,7 +63,7 @@ export function AuthCard({
             type="password"
             minLength={8}
             required
-            autoComplete="current-password"
+            autoComplete={isSignUp ? "new-password" : "current-password"}
             className="rounded-md border border-ink/15 bg-white px-3 py-2 dark:border-paper/15 dark:bg-ink/80"
           />
         </label>
