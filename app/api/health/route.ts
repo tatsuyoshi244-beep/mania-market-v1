@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { queryOne } from "@/lib/neon/db";
+import { getNeonAuth } from "@/lib/neon/auth";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -8,6 +9,7 @@ export async function GET() {
   const databaseConfigured = Boolean(process.env.DATABASE_URL);
   const authConfigured = Boolean(process.env.NEON_AUTH_BASE_URL ?? process.env.VITE_NEON_AUTH_URL);
   let database: "ok" | "unconfigured" | "unreachable" = databaseConfigured ? "unreachable" : "unconfigured";
+  let auth: "ok" | "unconfigured" | "unreachable" = authConfigured ? "unreachable" : "unconfigured";
 
   if (databaseConfigured) {
     try {
@@ -20,14 +22,27 @@ export async function GET() {
     }
   }
 
-  const healthy = database === "ok" && authConfigured;
+  if (authConfigured) {
+    try {
+      const result = await getNeonAuth().getSession({
+        query: { disableCookieCache: "true" }
+      });
+      auth = result.error ? "unreachable" : "ok";
+    } catch (error) {
+      console.error("[health] auth check failed", {
+        message: error instanceof Error ? error.message : "unknown error"
+      });
+    }
+  }
+
+  const healthy = database === "ok" && auth === "ok";
 
   return NextResponse.json(
     {
       status: healthy ? "ok" : "degraded",
       checks: {
         database,
-        auth: authConfigured ? "configured" : "unconfigured",
+        auth,
         stripe: process.env.STRIPE_SECRET_KEY ? "configured" : "optional"
       },
       deployment: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? "local"
