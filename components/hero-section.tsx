@@ -4,11 +4,15 @@ import { ArrowRight, Sparkles } from "lucide-react";
 import { getCategoryImageUrl } from "@/lib/category-images";
 
 const MOSAIC = [
-  { slug: "vintage", label: "ヴィンテージ", className: "col-span-2 row-span-2" },
-  { slug: "collectibles", label: "コレクション", className: "col-span-1 row-span-1" },
-  { slug: "music", label: "音楽", className: "col-span-1 row-span-2" },
-  { slug: "web", label: "Web", className: "col-span-1 row-span-1" },
-  { slug: "ai", label: "AI", className: "col-span-2 row-span-1" }
+  {
+    slug: "vintage",
+    label: "ヴィンテージ",
+    className: "col-start-1 col-span-2 row-start-1 row-span-2"
+  },
+  { slug: "collectibles", label: "コレクション", className: "col-start-3 row-start-1" },
+  { slug: "music", label: "音楽", className: "col-start-3 row-start-2 row-span-2" },
+  { slug: "web", label: "Web", className: "col-start-1 row-start-3" },
+  { slug: "ai", label: "AI", className: "col-start-2 row-start-3" }
 ] as const;
 
 export function HeroSection() {
