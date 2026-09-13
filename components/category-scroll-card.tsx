@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { getCategoryImageUrl } from "@/lib/category-images";
 
 type CategoryScrollCardProps = {
@@ -16,11 +17,12 @@ export function CategoryScrollCard({ slug, name, shopCount }: CategoryScrollCard
       className="group relative w-[min(72vw,220px)] shrink-0 snap-start overflow-hidden rounded-3xl"
     >
       <div className="relative aspect-[3/4] overflow-hidden">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <Image
           src={imageUrl}
-          alt=""
-          className="h-full w-full object-cover transition duration-700 group-hover:scale-110"
+          alt={`${name}カテゴリのイメージ`}
+          fill
+          sizes="220px"
+          className="object-cover transition duration-700 group-hover:scale-110"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-ink/80 via-ink/15 to-transparent" />
         <div className="absolute inset-x-0 bottom-0 p-4">

@@ -1,13 +1,14 @@
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { getCategoryImageUrl } from "@/lib/category-images";
 
 const MOSAIC = [
-  { slug: "vintage-camera", className: "col-span-2 row-span-2" },
-  { slug: "retro-games", className: "col-span-1 row-span-1" },
-  { slug: "analog-audio", className: "col-span-1 row-span-2" },
-  { slug: "designer-vintage", className: "col-span-1 row-span-1" },
-  { slug: "collectible-toys", className: "col-span-2 row-span-1" }
+  { slug: "vintage", label: "ヴィンテージ", className: "col-span-2 row-span-2" },
+  { slug: "collectibles", label: "コレクション", className: "col-span-1 row-span-1" },
+  { slug: "music", label: "音楽", className: "col-span-1 row-span-2" },
+  { slug: "web", label: "Web", className: "col-span-1 row-span-1" },
+  { slug: "ai", label: "AI", className: "col-span-2 row-span-1" }
 ] as const;
 
 export function HeroSection() {
@@ -58,18 +59,20 @@ export function HeroSection() {
             <div className="absolute -right-8 -top-6 size-36 rounded-full bg-cinnabar/12 blur-3xl" />
             <div className="absolute -bottom-10 -left-6 size-44 rounded-full bg-lagoon/15 blur-3xl" />
 
-            <div className="grid grid-cols-3 grid-rows-3 gap-2.5 sm:gap-3">
-              {MOSAIC.map((tile, index) => (
+            <div className="grid h-[340px] grid-cols-3 grid-rows-3 gap-2.5 sm:h-[460px] sm:gap-3 lg:h-[500px]">
+              {MOSAIC.map((tile) => (
                 <Link
                   key={tile.slug}
-                  href="/categories"
-                  className={`group relative overflow-hidden rounded-2xl sm:rounded-3xl ${tile.className} ${index === 0 ? "min-h-[180px]" : "min-h-[88px]"}`}
+                  href={`/categories/${tile.slug}`}
+                  aria-label={`${tile.label}カテゴリを見る`}
+                  className={`group relative overflow-hidden rounded-2xl sm:rounded-3xl ${tile.className}`}
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
+                  <Image
                     src={getCategoryImageUrl(tile.slug)}
                     alt=""
-                    className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
+                    fill
+                    sizes="(max-width: 1023px) 66vw, 32vw"
+                    className="object-cover transition duration-700 group-hover:scale-105"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-ink/35 via-transparent to-transparent opacity-80 transition group-hover:opacity-100" />
                 </Link>

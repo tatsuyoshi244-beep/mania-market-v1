@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowUpRight } from "lucide-react";
 import { getCategoryImageUrl } from "@/lib/category-images";
 
@@ -19,11 +20,12 @@ export function CategoryCard({ slug, name, description, shopCount }: CategoryCar
       className="group relative block overflow-hidden rounded-2xl border border-ink/8 shadow-sm transition duration-500 hover:-translate-y-1 hover:shadow-editorial dark:border-paper/10 dark:hover:shadow-glow"
     >
       <div className="relative aspect-[4/5] overflow-hidden sm:aspect-[3/4]">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <Image
           src={imageUrl}
-          alt=""
-          className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
+          alt={`${name}カテゴリのイメージ`}
+          fill
+          sizes="(max-width: 639px) 100vw, (max-width: 1023px) 50vw, 33vw"
+          className="object-cover transition duration-700 group-hover:scale-105"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-ink/90 via-ink/35 to-ink/10" />
         <div className="absolute inset-0 bg-cinnabar/0 transition duration-500 group-hover:bg-cinnabar/10" />
