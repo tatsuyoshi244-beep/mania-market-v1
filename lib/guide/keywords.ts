@@ -10,7 +10,9 @@ export const CATEGORY_HINTS: Record<string, string[]> = {
   "retro-games": ["ゲーム", "レトロ", "ファミコン", "game", "retro", "console", "ソフト"],
   "designer-vintage": ["ファッション", "ヴィンテージ", "バッグ", "服", "fashion", "designer", "アパレル"],
   "analog-audio": ["レコード", "オーディオ", "アナログ", "audio", "vinyl", "record", "音"],
-  "outdoor-gear": ["アウトドア", "キャンプ", "登山", "outdoor", "camp", "ギア", "gear"]
+  "outdoor-gear": ["アウトドア", "キャンプ", "登山", "outdoor", "camp", "ギア", "gear"],
+  web: ["web", "ウェブ", "サイト", "ホームページ", "アプリ", "saas", "サービス", "ノーコード"],
+  ai: ["ai", "人工知能", "生成ai", "chatgpt", "プロンプト", "自動化", "機械学習", "画像生成", "動画生成"]
 };
 
 export function extractGuideKeywords(query: string) {

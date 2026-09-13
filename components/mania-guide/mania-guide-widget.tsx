@@ -18,7 +18,9 @@ const WELCOME_MESSAGE: GuideChatMessage = {
 const SUGGESTIONS = [
   "フィルムカメラに興味がある",
   "レトロゲームの専門店を知りたい",
-  "ヴィンテージファッションを眺めたい"
+  "ヴィンテージファッションを眺めたい",
+  "便利なWebサービスを探したい",
+  "AIツールや生成AI作品を見たい"
 ] as const;
 
 function createId() {

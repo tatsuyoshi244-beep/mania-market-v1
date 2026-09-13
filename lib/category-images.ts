@@ -11,7 +11,11 @@ const CATEGORY_IMAGES: Record<string, string> = {
   "analog-audio":
     "https://images.unsplash.com/photo-1483412033650-f1014d9bbaad?auto=format&fit=crop&w=900&q=80",
   "outdoor-gear":
-    "https://images.unsplash.com/photo-1478131143081-80f7f84bca02?auto=format&fit=crop&w=900&q=80"
+    "https://images.unsplash.com/photo-1478131143081-80f7f84bca02?auto=format&fit=crop&w=900&q=80",
+  web:
+    "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=900&q=80",
+  ai:
+    "https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&w=900&q=80"
 };
 
 const FALLBACK_IMAGE =

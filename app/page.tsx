@@ -59,7 +59,7 @@ export default async function HomePage() {
 
   try {
     try {
-      const result = await getPopularCategories(6);
+      const result = await getPopularCategories(8);
       categories = result.data;
       if (result.error) queryErrors.push({ source: result.source, error: result.error });
     } catch (error) {

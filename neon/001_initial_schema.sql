@@ -132,7 +132,9 @@ insert into public.categories (slug, name, description, sort_order) values
   ('outdoor', 'アウトドア', '深い知識で選ばれたフィールドギア', 30),
   ('music', '音楽・オーディオ', '音を追求する人のための機材と作品', 40),
   ('collectibles', 'コレクション', '希少性と背景を楽しむ収集の世界', 50),
-  ('food', '食・嗜好品', '専門家が届けるこだわりの味', 60)
+  ('food', '食・嗜好品', '専門家が届けるこだわりの味', 60),
+  ('web', 'Web・アプリ', 'Webサイト、アプリ、SaaSなどオンラインで提供される専門サービス', 70),
+  ('ai', 'AI・生成AI', 'AIツール、生成AI作品、プロンプト、業務支援サービス', 80)
 on conflict (slug) do update set
   name = excluded.name,
   description = excluded.description,

@@ -19,7 +19,7 @@ const sans = DM_Sans({
 
 export const metadata: Metadata = {
   title: "Mania Market — マニア専門店の発見プラットフォーム",
-  description: "ヴィンテージカメラ、レトロゲーム、フィルム…マニアのための専門ショップとレアな商品を発見"
+  description: "ヴィンテージ、Webサービス、AIツールまで。マニアのための専門ショップと商品を発見"
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
