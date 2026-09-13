@@ -9,10 +9,9 @@ export function getNeonAuth() {
   if (auth) return auth;
 
   const cookieSecret = process.env.NEON_AUTH_COOKIE_SECRET || requireEnv("DATABASE_URL");
-  // Accept both Neon Auth URL formats: the React client uses a trailing
-  // /auth path, while the Next.js server integration uses the project base.
-  const configuredUrl = requireEnv("NEON_AUTH_BASE_URL").trim();
-  const baseUrl = configuredUrl.replace(/\/(?:api\/)?auth\/?$/, "").replace(/\/$/, "");
+  // Neon Project Info exposes the complete Auth URL. The server SDK appends
+  // endpoints such as sign-up/email, so the /auth path must be preserved.
+  const baseUrl = requireEnv("NEON_AUTH_BASE_URL").trim().replace(/\/$/, "");
   auth = createNeonAuth({
     baseUrl,
     cookies: { secret: cookieSecret, sessionDataTtl: 300 },
