@@ -115,31 +115,47 @@ async function guardApplicationSubmit(userId: string | null) {
 }
 
 export async function signIn(formData: FormData) {
-  const email = text(formData, "email");
+  const email = text(formData, "email")?.toLowerCase();
   const password = text(formData, "password");
-  if (!email) throw new Error("メールアドレスを入力してください。");
-  if (!password) throw new Error("パスワードを入力してください。");
   const redirectTo = safeInternalRoute(text(formData, "redirect_to"), "/mypage");
-  const { error } = await getNeonAuth().signIn.email({ email, password });
-  if (error) {
+  if (!email || !password) {
+    redirect(authErrorRedirect(redirectTo, "missing_fields", "signin") as Route);
+  }
+  try {
+    const { error } = await getNeonAuth().signIn.email({ email, password });
+    if (error) {
+      logServerError("signIn", error);
+      redirect(authErrorRedirect(redirectTo, authErrorCode(error, "auth"), "signin") as Route);
+    }
+  } catch (error) {
     logServerError("signIn", error);
-    redirect(authErrorRedirect(redirectTo, authErrorCode(error, "auth"), "signin") as Route);
+    redirect(authErrorRedirect(redirectTo, "auth_unavailable", "signin") as Route);
   }
   redirect(redirectTo);
 }
 
 export async function signUp(formData: FormData) {
-  const email = text(formData, "email");
+  const email = text(formData, "email")?.toLowerCase();
   const password = text(formData, "password");
   const name = text(formData, "name") ?? email?.split("@")[0];
-  if (!email || !password || !name) throw new Error("入力内容を確認してください。");
-  if (password.length < 8) throw new Error("パスワードは8文字以上で入力してください。");
-  const { error } = await getNeonAuth().signUp.email({ email, password, name });
-  if (error) {
-    logServerError("signUp", error);
-    redirect(authErrorRedirect(safeInternalRoute(text(formData, "redirect_to"), "/mypage"), authErrorCode(error, "signup"), "signup") as Route);
+  const redirectTo = safeInternalRoute(text(formData, "redirect_to"), "/mypage");
+  if (!email || !password || !name) {
+    redirect(authErrorRedirect(redirectTo, "missing_fields", "signup") as Route);
   }
-  redirect(safeInternalRoute(text(formData, "redirect_to"), "/mypage"));
+  if (password.length < 8) {
+    redirect(authErrorRedirect(redirectTo, "weak_password", "signup") as Route);
+  }
+  try {
+    const { error } = await getNeonAuth().signUp.email({ email, password, name });
+    if (error) {
+      logServerError("signUp", error);
+      redirect(authErrorRedirect(redirectTo, authErrorCode(error, "signup"), "signup") as Route);
+    }
+  } catch (error) {
+    logServerError("signUp", error);
+    redirect(authErrorRedirect(redirectTo, "auth_unavailable", "signup") as Route);
+  }
+  redirect(redirectTo);
 }
 
 export async function signOut() {
