@@ -14,6 +14,11 @@ import { getCategoryShopCounts, getPopularCategories } from "@/lib/queries/categ
 import { getDiscoverProducts } from "@/lib/queries/products";
 import { getPopularShops } from "@/lib/queries/shops";
 import { formatDatabaseError } from "@/lib/db/errors";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  alternates: { canonical: "/" }
+};
 
 export const dynamic = "force-dynamic";
 

@@ -73,9 +73,25 @@ export async function listShops(
   const params: Array<string | number> = [];
   const conditions = ["s.is_published = true"];
 
+  let queryParam: number | null = null;
   if (query) {
-    params.push(`%${query}%`);
-    conditions.push(`(s.name ilike $${params.length} or s.description ilike $${params.length})`);
+    params.push(query);
+    queryParam = params.length;
+    conditions.push(`(
+      s.name ilike '%' || $${queryParam} || '%'
+      or s.description ilike '%' || $${queryParam} || '%'
+      or exists (
+        select 1 from public.shop_categories scq
+        join public.categories cq on cq.id = scq.category_id
+        where scq.shop_id = s.id
+          and (cq.name ilike '%' || $${queryParam} || '%' or cq.description ilike '%' || $${queryParam} || '%')
+      )
+      or exists (
+        select 1 from public.products pq
+        where pq.shop_id = s.id and pq.status = 'active'
+          and (pq.name ilike '%' || $${queryParam} || '%' or pq.description ilike '%' || $${queryParam} || '%')
+      )
+    )`);
   }
   if (categorySlug) {
     params.push(categorySlug);
@@ -92,11 +108,18 @@ export async function listShops(
     params
   );
   params.push(SHOP_PAGE_SIZE, from);
+  const relevanceOrder = queryParam
+    ? `case
+         when lower(s.name) = lower($${queryParam}::text) then 0
+         when s.name ilike ($${queryParam} || '%') then 1
+         else 2
+       end asc,`
+    : "";
   const shops = await queryRows<HomeShop>(
     `select ${shopProjection}
      from public.shops s
      where ${where}
-     order by s.created_at desc
+     order by ${relevanceOrder} s.created_at desc
      limit $${params.length - 1} offset $${params.length}`,
     params
   );

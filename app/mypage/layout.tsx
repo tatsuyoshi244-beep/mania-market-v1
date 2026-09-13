@@ -2,6 +2,9 @@ import { AuthCard } from "@/components/auth-card";
 import { MypageNav } from "@/components/mypage-nav";
 import { SignOutButton } from "@/components/sign-out-button";
 import { getAuthUser } from "@/lib/auth";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 export default async function MypageLayout({ children }: { children: React.ReactNode }) {
   const user = await getAuthUser();

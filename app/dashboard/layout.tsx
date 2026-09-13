@@ -1,6 +1,9 @@
 import { AuthCard } from "@/components/auth-card";
 import { AccessDenied } from "@/components/access-denied";
 import { getDashboardAccess } from "@/lib/dashboard/access";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const access = await getDashboardAccess();

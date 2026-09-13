@@ -7,15 +7,33 @@ import { listShops } from "@/lib/queries/shops";
 import { parsePage } from "@/lib/pagination";
 import { getAuthUser } from "@/lib/auth";
 import { getUserSocialState } from "@/lib/queries/social";
+import type { Metadata } from "next";
+import { normalizeSearchQuery } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({
+  searchParams
+}: {
+  searchParams: Promise<{ q?: string; category?: string; page?: string }>;
+}): Promise<Metadata> {
+  const { q, category, page } = await searchParams;
+  const filtered = Boolean(q || category || (page && page !== "1"));
+  return {
+    title: q ? `「${normalizeSearchQuery(q)}」の専門店検索` : "マニア専門店を探す",
+    description: "こだわりの強い専門店を、ジャンルや取扱商品、キーワードから探せるショップ一覧です。",
+    alternates: { canonical: "/shops" },
+    robots: filtered ? { index: false, follow: true } : undefined
+  };
+}
 
 export default async function ShopsPage({
   searchParams
 }: {
   searchParams: Promise<{ q?: string; category?: string; page?: string }>;
 }) {
-  const { q, category, page: pageParam } = await searchParams;
+  const { q: rawQuery, category, page: pageParam } = await searchParams;
+  const q = normalizeSearchQuery(rawQuery);
   const page = parsePage(pageParam);
   const user = await getAuthUser();
   const [categories, result, social] = await Promise.all([

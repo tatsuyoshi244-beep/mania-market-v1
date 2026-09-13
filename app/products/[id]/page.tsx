@@ -7,12 +7,37 @@ import { asRelatedList } from "@/lib/utils";
 import { getAuthUser } from "@/lib/auth";
 import { getUserSocialState } from "@/lib/queries/social";
 import { AnalyticsView } from "@/components/analytics-view";
+import type { Metadata } from "next";
+import { JsonLd } from "@/components/json-ld";
+import { absoluteUrl, compactDescription } from "@/lib/seo";
+import { cache } from "react";
 
 export const dynamic = "force-dynamic";
+const getCachedProduct = cache(getProductById);
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+  const product = await getCachedProduct(id);
+  if (!product) return { title: "商品が見つかりません", robots: { index: false, follow: false } };
+
+  const shopName = product.shops?.name;
+  const description = compactDescription(
+    product.description,
+    `${product.name}${shopName ? `を扱う${shopName}` : ""}の商品情報です。`
+  );
+  const images = product.image_url ? [product.image_url] : [];
+  return {
+    title: `${product.name}${shopName ? `｜${shopName}` : ""}`,
+    description,
+    alternates: { canonical: `/products/${id}` },
+    openGraph: { title: product.name, description, type: "website", url: `/products/${id}`, images },
+    twitter: { card: images.length ? "summary_large_image" : "summary", title: product.name, description, images }
+  };
+}
 
 export default async function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const [product, user] = await Promise.all([getProductById(id), getAuthUser()]);
+  const [product, user] = await Promise.all([getCachedProduct(id), getAuthUser()]);
   if (!product) notFound();
 
   const social = await getUserSocialState(user?.id);
@@ -23,12 +48,38 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
 
   return (
     <section className="mx-auto grid max-w-6xl gap-8 px-4 py-10 lg:grid-cols-[0.95fr_1.05fr]">
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "Product",
+              "@id": absoluteUrl(`/products/${id}#product`),
+              name: product.name,
+              description: compactDescription(product.description, `${product.name}の商品情報`),
+              image: product.image_url ? [product.image_url] : undefined,
+              category: product.category_slug || undefined,
+              keywords: tags.length ? tags.join(", ") : undefined,
+              brand: shop ? { "@type": "Brand", name: shop.name } : undefined,
+              url: absoluteUrl(`/products/${id}`)
+            },
+            {
+              "@type": "BreadcrumbList",
+              itemListElement: [
+                { "@type": "ListItem", position: 1, name: "ホーム", item: absoluteUrl("/") },
+                { "@type": "ListItem", position: 2, name: "商品", item: absoluteUrl("/products") },
+                { "@type": "ListItem", position: 3, name: product.name, item: absoluteUrl(`/products/${id}`) }
+              ]
+            }
+          ]
+        }}
+      />
       <AnalyticsView type="product_view" productId={product.id} />
       <div className="overflow-hidden rounded-2xl border border-ink/10 bg-white/90 shadow-sm dark:border-paper/10 dark:bg-ink/60">
         <div className="aspect-square bg-lagoon/15">
           {product.image_url ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={product.image_url} alt="" className="h-full w-full object-cover" />
+            <img src={product.image_url} alt={product.name} className="h-full w-full object-cover" />
           ) : (
             <div className="flex h-full items-center justify-center text-ink/50 dark:text-paper/50">No image</div>
           )}
@@ -77,7 +128,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
               <div className="flex size-14 items-center justify-center overflow-hidden rounded-xl border border-ink/10 bg-white">
                 {shop.logo_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={shop.logo_url} alt="" className="h-full w-full object-cover" />
+                  <img src={shop.logo_url} alt={`${shop.name}のロゴ`} className="h-full w-full object-cover" />
                 ) : (
                   <Store className="size-6 text-moss" />
                 )}

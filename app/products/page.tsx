@@ -7,15 +7,33 @@ import { listProducts } from "@/lib/queries/products";
 import { parsePage } from "@/lib/pagination";
 import { getAuthUser } from "@/lib/auth";
 import { getUserSocialState } from "@/lib/queries/social";
+import type { Metadata } from "next";
+import { normalizeSearchQuery } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({
+  searchParams
+}: {
+  searchParams: Promise<{ q?: string; category?: string; tag?: string; page?: string }>;
+}): Promise<Metadata> {
+  const { q, category, tag, page } = await searchParams;
+  const filtered = Boolean(q || category || tag || (page && page !== "1"));
+  return {
+    title: q ? `「${normalizeSearchQuery(q)}」の商品検索` : "こだわり商品を探す",
+    description: "専門店が選んだヴィンテージ、工芸、アウトドア、音楽、コレクション、食、Web・アプリ、AI・生成AIの商品を探せます。",
+    alternates: { canonical: "/products" },
+    robots: filtered ? { index: false, follow: true } : undefined
+  };
+}
 
 export default async function ProductsPage({
   searchParams
 }: {
   searchParams: Promise<{ q?: string; category?: string; tag?: string; page?: string }>;
 }) {
-  const { q, category, tag, page: pageParam } = await searchParams;
+  const { q: rawQuery, category, tag, page: pageParam } = await searchParams;
+  const q = normalizeSearchQuery(rawQuery);
   const page = parsePage(pageParam);
   const user = await getAuthUser();
   const [categories, result, social] = await Promise.all([

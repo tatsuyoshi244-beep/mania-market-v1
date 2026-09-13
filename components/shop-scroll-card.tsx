@@ -33,7 +33,7 @@ export function ShopScrollCard({ shop }: ShopScrollCardProps) {
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={shop.cover_image_url}
-            alt=""
+            alt={`${shop.name}のカバー画像`}
             className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
           />
         ) : (
@@ -45,7 +45,7 @@ export function ShopScrollCard({ shop }: ShopScrollCardProps) {
             <div className="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-white/30 bg-white/95">
               {shop.logo_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={shop.logo_url} alt="" className="h-full w-full object-cover" />
+                <img src={shop.logo_url} alt={`${shop.name}のロゴ`} className="h-full w-full object-cover" />
               ) : (
                 <Store className="size-5 text-moss" />
               )}

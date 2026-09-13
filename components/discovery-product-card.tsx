@@ -34,7 +34,7 @@ export function DiscoveryProductCard({ product, layout = "square" }: DiscoveryPr
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={product.image_url}
-            alt=""
+            alt={product.name}
             className="h-full min-h-[inherit] w-full object-cover transition duration-700 group-hover:scale-105"
           />
         ) : (

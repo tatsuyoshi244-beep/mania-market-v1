@@ -5,8 +5,9 @@ import { getAuthUser } from "@/lib/auth";
 import { listCategories } from "@/lib/categories";
 
 export const metadata = {
-  title: "出店申請 — Mania Market",
-  description: "Mania Market への出店申請フォーム"
+  title: "出店申請",
+  description: "マニアマーケットへの出店申請フォーム",
+  alternates: { canonical: "/partner/apply" }
 };
 
 type PageProps = {

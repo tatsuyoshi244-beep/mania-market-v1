@@ -2,6 +2,9 @@ import { AuthCard } from "@/components/auth-card";
 import { AccessDenied } from "@/components/access-denied";
 import { requireAdminUser } from "@/lib/partner-applications/admin";
 import { getAuthUser } from "@/lib/auth";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const user = await getAuthUser();

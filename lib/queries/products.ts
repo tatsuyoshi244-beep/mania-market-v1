@@ -64,9 +64,26 @@ export async function listProducts(
   const params: Array<string | number> = [];
   const conditions = ["p.status = 'active'", "s.is_published = true"];
 
+  let queryParam: number | null = null;
   if (query) {
-    params.push(`%${query}%`);
-    conditions.push(`(p.name ilike $${params.length} or p.description ilike $${params.length})`);
+    params.push(query);
+    queryParam = params.length;
+    conditions.push(`(
+      p.name ilike '%' || $${queryParam} || '%'
+      or p.description ilike '%' || $${queryParam} || '%'
+      or s.name ilike '%' || $${queryParam} || '%'
+      or s.description ilike '%' || $${queryParam} || '%'
+      or exists (
+        select 1 from public.product_tags pt
+        where pt.product_id = p.id and pt.tag ilike '%' || $${queryParam} || '%'
+      )
+      or exists (
+        select 1 from public.shop_categories scq
+        join public.categories cq on cq.id = scq.category_id
+        where scq.shop_id = p.shop_id
+          and (cq.name ilike '%' || $${queryParam} || '%' or cq.description ilike '%' || $${queryParam} || '%')
+      )
+    )`);
   }
   if (categorySlug) {
     params.push(categorySlug);
@@ -92,11 +109,20 @@ export async function listProducts(
     params
   );
   params.push(PRODUCT_PAGE_SIZE, from);
+  const relevanceOrder = queryParam
+    ? `case
+         when lower(p.name) = lower($${queryParam}::text) then 0
+         when p.name ilike ($${queryParam} || '%') then 1
+         when exists (select 1 from public.product_tags ptr where ptr.product_id = p.id and lower(ptr.tag) = lower($${queryParam}::text)) then 2
+         when s.name ilike ($${queryParam} || '%') then 3
+         else 4
+       end asc,`
+    : "";
   const products = await queryRows<HomeProduct>(
     `select ${productProjection}
      from public.products p join public.shops s on s.id = p.shop_id
      where ${where}
-     order by p.created_at desc
+     order by ${relevanceOrder} p.created_at desc
      limit $${params.length - 1} offset $${params.length}`,
     params
   );

@@ -51,7 +51,7 @@ export function ShopCard({
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={shop.cover_image_url}
-              alt=""
+              alt={`${shop.name}のカバー画像`}
               className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
             />
           ) : (
@@ -63,7 +63,7 @@ export function ShopCard({
               <div className="flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl border-2 border-white/30 bg-white/95 shadow-lg sm:size-16">
                 {shop.logo_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={shop.logo_url} alt="" className="h-full w-full object-cover" />
+                  <img src={shop.logo_url} alt={`${shop.name}のロゴ`} className="h-full w-full object-cover" />
                 ) : (
                   <Store className="size-6 text-moss" />
                 )}

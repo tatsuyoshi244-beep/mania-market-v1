@@ -7,8 +7,36 @@ import { listProductsByCategory } from "@/lib/queries/products";
 import { listShopsByCategory } from "@/lib/queries/shops";
 import { getAuthUser } from "@/lib/auth";
 import { getUserSocialState } from "@/lib/queries/social";
+import type { Metadata } from "next";
+import { JsonLd } from "@/components/json-ld";
+import { absoluteUrl, compactDescription } from "@/lib/seo";
+import { cache } from "react";
 
 export const dynamic = "force-dynamic";
+const getCachedCategory = cache(getCategoryBySlug);
+
+export async function generateMetadata({
+  params
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const category = await getCachedCategory(slug);
+  if (!category) return { title: "カテゴリが見つかりません", robots: { index: false, follow: false } };
+
+  const description = compactDescription(
+    category.description,
+    `${category.name}の専門店とこだわり商品をマニアマーケットで探せます。`
+  );
+  const image = getCategoryImageUrl(slug);
+  return {
+    title: `${category.name}の専門店・商品`,
+    description,
+    alternates: { canonical: `/categories/${slug}` },
+    openGraph: { title: `${category.name}の専門店・商品`, description, url: `/categories/${slug}`, images: [image] },
+    twitter: { card: "summary_large_image", title: `${category.name}の専門店・商品`, description, images: [image] }
+  };
+}
 
 export default async function CategoryDetailPage({
   params
@@ -16,7 +44,7 @@ export default async function CategoryDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const [category, user] = await Promise.all([getCategoryBySlug(slug), getAuthUser()]);
+  const [category, user] = await Promise.all([getCachedCategory(slug), getAuthUser()]);
   if (!category) notFound();
 
   const [shops, products, social] = await Promise.all([
@@ -29,9 +57,41 @@ export default async function CategoryDetailPage({
 
   return (
     <section>
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "CollectionPage",
+              name: `${category.name}の専門店・商品`,
+              description: compactDescription(category.description, `${category.name}の専門店と商品`),
+              url: absoluteUrl(`/categories/${slug}`),
+              inLanguage: "ja-JP"
+            },
+            {
+              "@type": "BreadcrumbList",
+              itemListElement: [
+                { "@type": "ListItem", position: 1, name: "ホーム", item: absoluteUrl("/") },
+                { "@type": "ListItem", position: 2, name: "カテゴリ", item: absoluteUrl("/categories") },
+                { "@type": "ListItem", position: 3, name: category.name, item: absoluteUrl(`/categories/${slug}`) }
+              ]
+            },
+            {
+              "@type": "ItemList",
+              name: `${category.name}の商品`,
+              itemListElement: products.slice(0, 20).map((product, index) => ({
+                "@type": "ListItem",
+                position: index + 1,
+                name: product.name,
+                url: absoluteUrl(`/products/${product.id}`)
+              }))
+            }
+          ]
+        }}
+      />
       <div className="relative h-56 overflow-hidden sm:h-72 lg:h-80">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={imageUrl} alt="" className="h-full w-full object-cover" />
+        <img src={imageUrl} alt={`${category.name}の専門ジャンル`} className="h-full w-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-ink/85 via-ink/40 to-transparent" />
         <div className="absolute inset-x-0 bottom-0 mx-auto max-w-6xl px-4 pb-8">
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/65">Category</p>

@@ -3,8 +3,9 @@ import { ArrowRight, Compass, Globe2, ShieldCheck, Store } from "lucide-react";
 import { SiteFooter } from "@/components/site-footer";
 
 export const metadata = {
-  title: "Mania Marketとは — Mania Market",
-  description: "Mania Marketの役割、掲載ジャンル、ショップ運営、購入の流れをご案内します。"
+  title: "サービス概要",
+  description: "マニアマーケットの役割、掲載ジャンル、ショップ運営、購入の流れをご案内します。",
+  alternates: { canonical: "/about" }
 };
 
 const PRINCIPLES = [

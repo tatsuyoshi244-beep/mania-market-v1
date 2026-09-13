@@ -34,7 +34,7 @@ export function ProductCard({
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={product.image_url}
-            alt=""
+            alt={product.name}
             className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
           />
         ) : (

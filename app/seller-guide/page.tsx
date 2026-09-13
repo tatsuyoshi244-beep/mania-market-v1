@@ -23,8 +23,9 @@ import {
 } from "@/lib/seller-guide-content";
 
 export const metadata = {
-  title: "出店ガイド — Mania Market",
-  description: "Mania Market への出店方法・条件・プラン・利用規約の要約。マニア専門店の出店を安心して始められます。"
+  title: "出店ガイド",
+  description: "マニアマーケットへの出店方法・条件・プラン・利用規約の要約。マニア専門店の出店を安心して始められます。",
+  alternates: { canonical: "/seller-guide" }
 };
 
 export default function SellerGuidePage() {

@@ -1,5 +1,12 @@
 import { CategoryCard } from "@/components/category-card";
 import { getCategoryShopCounts, listAllCategories } from "@/lib/queries/categories";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "専門ジャンル一覧",
+  description: "ヴィンテージ、クラフト、アウトドア、音楽、コレクション、食、Web・アプリ、AI・生成AIから専門店と商品を探せます。",
+  alternates: { canonical: "/categories" }
+};
 
 export const dynamic = "force-dynamic";
 
