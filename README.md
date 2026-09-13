@@ -50,6 +50,8 @@ STRIPE_PREMIUM_PRICE_ID=price_xxxxx
 
 ## Neon マイグレーション
 
+パートナー営業CRMと流入計測を有効にする場合は、既存の移行SQLに続けて `neon/005_partner_growth.sql` を実行してください。
+
 Neon SQL Editor で [neon/001_initial_schema.sql](neon/001_initial_schema.sql)、
 [neon/002_complete_platform.sql](neon/002_complete_platform.sql)、
 [neon/003_product_plan_guards.sql](neon/003_product_plan_guards.sql) の順に実行してください。
