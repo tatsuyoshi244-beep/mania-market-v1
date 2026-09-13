@@ -11,6 +11,7 @@ export type HomeProduct = {
   image_url: string | null;
   shop_id?: string;
   created_at: string;
+  category_slug?: string | null;
   product_tags?: Array<{ tag: string }>;
   shops?: {
     id?: string;
@@ -26,6 +27,9 @@ export type HomeProduct = {
 const productProjection = `
   p.id::text, p.name, p.description, p.price_label, p.external_url,
   p.image_url, p.shop_id::text, p.created_at::text,
+  (select c.slug from public.shop_categories sc
+    join public.categories c on c.id = sc.category_id
+    where sc.shop_id = p.shop_id order by c.sort_order, c.slug limit 1) as category_slug,
   coalesce((
     select jsonb_agg(jsonb_build_object('tag', pt.tag) order by pt.tag)
     from public.product_tags pt where pt.product_id = p.id
@@ -143,8 +147,8 @@ export async function getDiscoverProducts(limit = 3): Promise<QueryResult<HomePr
        where p.status = 'active' and s.is_published = true
        order by p.created_at desc limit 48`
     );
-    const { getDailySeed, pickDailyRandom } = await import("@/lib/discover");
-    return querySuccess(source, pickDailyRandom(pool, limit, getDailySeed()));
+    const { getDailySeed, pickDailyCurated } = await import("@/lib/discover");
+    return querySuccess(source, pickDailyCurated(pool, limit, getDailySeed()));
   } catch (error) {
     return queryFailure(source, error, []);
   }

@@ -1,10 +1,11 @@
 import Link from "next/link";
-import { ThemeToggle } from "@/components/theme-toggle";
+import type { Route } from "next";
 
 const navItems = [
   { href: "/shops", label: "ショップ" },
   { href: "/products", label: "商品" },
   { href: "/categories", label: "カテゴリ" },
+  { href: "/about", label: "サービス概要" },
   { href: "/mypage", label: "マイページ" },
   { href: "/seller-guide", label: "出店" }
 ] as const;
@@ -20,13 +21,12 @@ export function SiteHeader() {
           {navItems.map((item) => (
             <Link
               key={item.href}
-              href={item.href}
+              href={item.href as Route}
               className="rounded-full px-3 py-1.5 text-ink/75 transition hover:bg-ink/5 hover:text-cinnabar dark:text-paper/75 dark:hover:bg-paper/5"
             >
               {item.label}
             </Link>
           ))}
-          <ThemeToggle />
         </div>
       </nav>
     </header>

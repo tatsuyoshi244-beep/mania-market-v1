@@ -34,10 +34,28 @@ export async function getPopularShops(limit = 6): Promise<QueryResult<HomeShop[]
   const source = "shops.getPopularShops";
   try {
     const data = await queryRows<HomeShop>(
-      `select ${shopProjection}
+      `with shop_scores as (
+         select s.id,
+           (
+             coalesce((select count(*) from public.analytics_events ae
+               where ae.shop_id = s.id and ae.event_type = 'shop_view'
+                 and ae.created_at >= now() - interval '30 days'), 0) * 1
+             + coalesce((select count(*) from public.analytics_events ae
+               join public.products p on p.id = ae.product_id
+               where p.shop_id = s.id and ae.event_type = 'external_click'
+                 and ae.created_at >= now() - interval '30 days'), 0) * 4
+             + coalesce((select count(*) from public.favorites f where f.shop_id = s.id), 0) * 3
+             + coalesce((select count(*) from public.follows f where f.shop_id = s.id), 0) * 2
+             + greatest(0, 30 - floor(extract(epoch from (now() - s.updated_at)) / 86400))
+           )::numeric as popularity_score
+         from public.shops s
+         where s.is_published = true
+       )
+       select ${shopProjection}
        from public.shops s
+       join shop_scores ss on ss.id = s.id
        where s.is_published = true
-       order by s.created_at desc
+       order by ss.popularity_score desc, s.updated_at desc, s.created_at desc
        limit $1`,
       [limit]
     );

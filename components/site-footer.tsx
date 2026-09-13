@@ -1,9 +1,11 @@
 import Link from "next/link";
+import type { Route } from "next";
 
 const LINKS = [
   { href: "/shops", label: "ショップ" },
   { href: "/products", label: "商品" },
   { href: "/categories", label: "カテゴリ" },
+  { href: "/about", label: "サービス概要" },
   { href: "/mypage", label: "マイページ" },
   { href: "/seller-guide", label: "出店" }
 ] as const;
@@ -20,7 +22,7 @@ export function SiteFooter() {
         </div>
         <nav className="flex flex-wrap gap-x-6 gap-y-2 text-sm font-semibold">
           {LINKS.map((link) => (
-            <Link key={link.href} href={link.href} className="text-ink/70 hover:text-cinnabar dark:text-paper/70">
+            <Link key={link.href} href={link.href as Route} className="text-ink/70 hover:text-cinnabar dark:text-paper/70">
               {link.label}
             </Link>
           ))}

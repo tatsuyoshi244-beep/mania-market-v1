@@ -47,7 +47,7 @@ export default function SellerGuidePage() {
             {
               icon: Store,
               title: "マニア専門店の場",
-              body: "ヴィンテージカメラ、レトロゲーム、アナログ音楽など、熱量の高い専門店が集まります。"
+              body: "ヴィンテージ、クラフト、音楽、食だけでなく、WebサービスやAIツールなどオンラインの専門サービスも掲載できます。"
             },
             {
               icon: Globe,

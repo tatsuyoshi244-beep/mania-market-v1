@@ -104,7 +104,7 @@ export default async function HomePage() {
         <SectionHeader
           label="Today"
           title="今日の発見"
-          description="毎日3つの一品。偶然の出会いを、日替わりでお届けします。"
+          description="新着48件からカテゴリが偏らないように3件を選び、毎日入れ替えてお届けします。"
           href="/products"
         />
         {discoverProducts.length === 0 ? (
@@ -153,7 +153,7 @@ export default async function HomePage() {
         <SectionHeader
           label="Popular"
           title="人気ショップ"
-          description="熱量の高い専門店を、横に流れるギャラリーのように。"
+          description="閲覧・外部クリック・お気に入り・フォローと更新状況を組み合わせたスコア順です。"
           href="/shops"
         />
         {shops.length === 0 ? (
