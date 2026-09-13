@@ -9,7 +9,12 @@ export const metadata = {
   description: "Mania Market への出店申請フォーム"
 };
 
-export default async function PartnerApplyPage() {
+type PageProps = {
+  searchParams: Promise<{ lead?: string; ref?: string; utm_source?: string; utm_campaign?: string }>;
+};
+
+export default async function PartnerApplyPage({ searchParams }: PageProps) {
+  const tracking = await searchParams;
   const [user, categories] = await Promise.all([getAuthUser(), listCategories()]);
 
   return (
@@ -34,7 +39,16 @@ export default async function PartnerApplyPage() {
 
       <section className="mx-auto max-w-3xl px-4 py-12 sm:py-16">
         <div className="rounded-3xl border border-ink/10 bg-white/80 p-6 shadow-sm dark:border-paper/10 dark:bg-ink/50 sm:p-8">
-          <PartnerApplyForm categories={categories} defaultEmail={user?.email} />
+          <PartnerApplyForm
+            categories={categories}
+            defaultEmail={user?.email}
+            tracking={{
+              leadToken: tracking.lead,
+              referralCode: tracking.ref,
+              source: tracking.utm_source,
+              campaign: tracking.utm_campaign
+            }}
+          />
         </div>
       </section>
     </div>
