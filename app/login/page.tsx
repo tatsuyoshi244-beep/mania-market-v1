@@ -1,5 +1,11 @@
 import { AuthCard } from "@/components/auth-card";
 import { safeInternalRoute } from "@/lib/navigation";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "ログイン",
+  robots: { index: false, follow: false }
+};
 
 export default async function LoginPage({
   searchParams
@@ -11,9 +17,9 @@ export default async function LoginPage({
 
   return (
     <div className="px-4 py-10">
-      {error === "auth" ? (
+      {error ? (
         <p className="mx-auto mb-4 max-w-xl rounded-md border border-cinnabar/30 bg-cinnabar/10 px-4 py-3 text-sm text-cinnabar">
-          ログインに失敗しました。もう一度お試しください。
+          {error === "account_exists" ? "このメールアドレスは既に登録されています。ログインしてください。" : "ログインに失敗しました。メールアドレスとパスワードを確認してください。"}
         </p>
       ) : null}
       <AuthCard
@@ -21,6 +27,7 @@ export default async function LoginPage({
         title="ログイン"
         description="お気に入り・フォロー機能を使うにはログインが必要です。"
         sent={sent === "1"}
+        error={undefined}
       />
     </div>
   );

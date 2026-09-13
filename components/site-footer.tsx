@@ -7,7 +7,8 @@ const LINKS = [
   { href: "/categories", label: "カテゴリ" },
   { href: "/about", label: "サービス概要" },
   { href: "/mypage", label: "マイページ" },
-  { href: "/seller-guide", label: "出店" }
+  { href: "/seller-guide", label: "出店" },
+  { href: "/admin/login", label: "運営者ログイン" }
 ] as const;
 
 export function SiteFooter() {
