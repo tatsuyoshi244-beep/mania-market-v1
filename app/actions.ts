@@ -38,7 +38,7 @@ function authErrorCode(error: unknown, fallback: "auth" | "signup") {
 
 function authErrorRedirect(redirectTo: string, code: string, mode: "signin" | "signup") {
   const path = redirectTo === "/admin" ? "/admin/login" : mode === "signup" ? "/signup" : "/login";
-  return `${path}?next=${encodeURIComponent(redirectTo)}&error=${encodeURIComponent(code)}`;
+  return "/"+path.slice(1)+"?next="+encodeURIComponent(redirectTo)+"&error="+encodeURIComponent(code);
 }
 
 function text(formData: FormData, key: string) {
@@ -427,11 +427,6 @@ function parseCategories(formData: FormData) {
   ];
 }
 
-function trackingValue(formData: FormData, key: string) {
-  const raw = text(formData, key);
-  return raw ? raw.slice(0, 120) : null;
-}
-
 export async function submitPartnerApplication(formData: FormData) {
   if (formData.get("terms_agreed") !== "on") {
     throw new Error("利用規約への同意が必要です。");
@@ -467,32 +462,19 @@ export async function submitPartnerApplication(formData: FormData) {
     categories
   });
 
-  const leadToken = uuid(formData, "lead_token", false);
-  const acquisitionSource = trackingValue(formData, "acquisition_source") ?? (leadToken ? "direct_outreach" : "direct");
   const inserted = await queryRows<{ id: string }>(
-    `with matched_lead as (
-       select id from public.partner_leads where invite_token=$21::uuid
-     ), inserted as (
-       insert into public.partner_applications
+    `insert into public.partner_applications
      (user_id, shop_name, owner_name, email, region, website_url, instagram_url, x_url,
       description, mission, target_user, categories, status, ai_score, ai_specialty,
-      ai_originality, ai_passion, ai_safety, ai_recommendation, ai_comment, ai_checked_at,
-      acquisition_source,acquisition_campaign,referral_code,partner_lead_id)
-     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,'pending',$13,$14,$15,$16,$17,$18,$19,$20,$22,$23,$24,
-       (select id from matched_lead))
-     returning id,partner_lead_id
-     ), updated_lead as (
-       update public.partner_leads pl set application_id=i.id,status='applied',updated_at=now()
-       from inserted i where pl.id=i.partner_lead_id returning pl.id
-     )
-     select id::text from inserted`,
+      ai_originality, ai_passion, ai_safety, ai_recommendation, ai_comment, ai_checked_at)
+     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,'pending',$13,$14,$15,$16,$17,$18,$19,$20)
+     returning id::text`,
     [
       authUser?.id ?? null, shop_name, owner_name, email, text(formData, "region"), httpUrl(formData, "website_url"),
       httpUrl(formData, "instagram_url"), httpUrl(formData, "x_url"), text(formData, "description"),
       text(formData, "mission"), text(formData, "target_user"), categories, aiReview.ai_score,
       aiReview.ai_specialty, aiReview.ai_originality, aiReview.ai_passion, aiReview.ai_safety,
-      aiReview.ai_recommendation, aiReview.ai_comment, aiReview.ai_checked_at, leadToken,
-      acquisitionSource, trackingValue(formData, "acquisition_campaign"), trackingValue(formData, "referral_code")
+      aiReview.ai_recommendation, aiReview.ai_comment, aiReview.ai_checked_at
     ]
   );
   const insertedId = inserted[0]?.id;
@@ -505,8 +487,7 @@ export async function submitPartnerApplication(formData: FormData) {
     targetId: insertedId,
     metadata: {
       category_count: categories.length,
-      ai_recommendation: aiReview.ai_recommendation ?? null,
-      acquisition_source: acquisitionSource
+      ai_recommendation: aiReview.ai_recommendation ?? null
     },
     ipHash: ctx.ipHash,
     userAgentHash: ctx.userAgentHash
@@ -582,11 +563,6 @@ export async function publishPartnerApplication(formData: FormData) {
   const { ctx } = await guardAdminOps(authUser.id);
   const id = applicationId(formData);
   const result = await publishPartnerApplicationShop(id);
-  await queryRows(
-    `update public.partner_leads set status='published',published_shop_id=$1,updated_at=now()
-     where application_id=$2 returning id`,
-    [result.shopId, id]
-  );
   await writeAuditLog({
     userId: authUser.id,
     action: "admin_publish_shop",
@@ -597,7 +573,6 @@ export async function publishPartnerApplication(formData: FormData) {
     userAgentHash: ctx.userAgentHash
   });
   revalidatePartnerApplicationPaths(id);
-  revalidatePath("/admin/partner-leads");
   revalidatePath("/shops");
 }
 
