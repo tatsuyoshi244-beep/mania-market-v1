@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Route } from "next";
 import { AuthCard } from "@/components/auth-card";
 import { getAuthUser } from "@/lib/auth";
 import { queryOne, queryRows } from "@/lib/neon/db";
@@ -35,6 +36,13 @@ export default async function AdminPage() {
         >
           出店申請管理
           <p className="mt-2 text-sm font-normal text-ink/65">審査・承認・公開</p>
+        </Link>
+        <Link
+          href={"/admin/partner-leads" as Route}
+          className="rounded-xl border border-moss/25 bg-moss/8 p-5 font-bold shadow-sm transition hover:border-moss"
+        >
+          パートナー営業
+          <p className="mt-2 text-sm font-normal text-ink/65">候補・連絡・申請・掲載を管理</p>
         </Link>
         <Link
           href="/admin/audit-logs"
