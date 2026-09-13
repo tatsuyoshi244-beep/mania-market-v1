@@ -4,11 +4,21 @@ import { submitPartnerApplication } from "@/app/actions";
 type PartnerApplyFormProps = {
   categories: Array<{ id: string; name: string }>;
   defaultEmail?: string | null;
+  tracking?: {
+    leadToken?: string;
+    referralCode?: string;
+    source?: string;
+    campaign?: string;
+  };
 };
 
-export function PartnerApplyForm({ categories, defaultEmail }: PartnerApplyFormProps) {
+export function PartnerApplyForm({ categories, defaultEmail, tracking }: PartnerApplyFormProps) {
   return (
     <form action={submitPartnerApplication} className="grid gap-6">
+      <input type="hidden" name="lead_token" value={tracking?.leadToken ?? ""} />
+      <input type="hidden" name="referral_code" value={tracking?.referralCode ?? ""} />
+      <input type="hidden" name="acquisition_source" value={tracking?.source ?? "direct"} />
+      <input type="hidden" name="acquisition_campaign" value={tracking?.campaign ?? ""} />
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="grid gap-1.5 text-sm font-medium">
           ショップ名 <span className="text-cinnabar">*</span>
