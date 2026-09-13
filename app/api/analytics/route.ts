@@ -13,9 +13,10 @@ export async function POST(request: Request) {
     type?: AnalyticsEventType;
     shopId?: string;
     productId?: string;
+    metadata?: Record<string, unknown>;
   } | null;
 
-  if (!body || (body.type !== "shop_view" && body.type !== "product_view")) {
+  if (!body || (body.type !== "shop_view" && body.type !== "product_view" && body.type !== "landing_view")) {
     return NextResponse.json({ error: "unsupported event type" }, { status: 400 });
   }
 
@@ -32,7 +33,9 @@ export async function POST(request: Request) {
   let shopId: string | null = null;
   let productId: string | null = null;
 
-  if (body.type === "shop_view") {
+  if (body.type === "landing_view") {
+    // Landing attribution never stores a full referrer URL or personal data.
+  } else if (body.type === "shop_view") {
     if (!body.shopId || !UUID_PATTERN.test(body.shopId)) {
       return NextResponse.json({ error: "valid shopId is required" }, { status: 400 });
     }
@@ -63,8 +66,19 @@ export async function POST(request: Request) {
     type: body.type,
     userId: user?.id,
     shopId,
-    productId
+    productId,
+    metadata: body.type === "landing_view" ? sanitizeLandingMetadata(body.metadata) : undefined
   });
 
   return NextResponse.json({ ok: true });
+}
+
+function sanitizeLandingMetadata(metadata?: Record<string, unknown>) {
+  const allowed = ["path", "source", "medium", "campaign", "referral", "referrer_host"] as const;
+  const result: Record<string, string> = {};
+  for (const key of allowed) {
+    const value = metadata?.[key];
+    if (typeof value === "string" && value.trim()) result[key] = value.trim().slice(0, 160);
+  }
+  return result;
 }
