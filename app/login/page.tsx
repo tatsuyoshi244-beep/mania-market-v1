@@ -19,7 +19,7 @@ export default async function LoginPage({
     <div className="px-4 py-10">
       {error ? (
         <p className="mx-auto mb-4 max-w-xl rounded-md border border-cinnabar/30 bg-cinnabar/10 px-4 py-3 text-sm text-cinnabar">
-          {error === "account_exists" ? "このメールアドレスは既に登録されています。ログインしてください。" : "ログインに失敗しました。メールアドレスとパスワードを確認してください。"}
+          {error === "missing_fields" ? "メールアドレスとパスワードを入力してください。" : error === "auth_unavailable" ? "認証サービスに接続できませんでした。時間をおいて、もう一度お試しください。" : "ログインに失敗しました。メールアドレスとパスワードを確認してください。"}
         </p>
       ) : null}
       <AuthCard
