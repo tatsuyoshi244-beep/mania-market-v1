@@ -10,9 +10,13 @@ export default async function SignUpPage({ searchParams }: { searchParams: Promi
   const redirectTo = safeInternalRoute(next, "/mypage");
   const message = error === "account_exists"
     ? "このメールアドレスは既に登録されています。ログインしてください。"
-    : error
-      ? "登録できませんでした。入力内容を確認して、もう一度お試しください。"
-      : undefined;
+    : error === "missing_fields"
+      ? "メールアドレス・表示名・パスワードを入力してください。"
+      : error === "weak_password"
+        ? "パスワードは8文字以上で入力してください。"
+        : error
+          ? "登録処理に接続できませんでした。時間をおいて、もう一度お試しください。"
+          : undefined;
 
   return (
     <div className="px-4 py-10">
