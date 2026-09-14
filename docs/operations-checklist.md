@@ -14,3 +14,12 @@
 - 原因: NeonのProject Infoが発行した完全なAuth URLから、必要な末尾パスをコード側で削除した。
 - 修正: `NEON_AUTH_BASE_URL` は末尾の `/` だけを除き、それ以外のパスはそのままSDKへ渡す。
 - 再発防止: `/api/health` は環境変数の有無だけでなく、Neon Authの `get-session` へ実際に到達できるかを確認する。
+
+## 2026-09-15 登録・ログイン障害
+
+- 事象: 出店者の新規登録と管理者ログインがどちらも失敗した。
+- 直接原因: Neon Authの信頼済みドメインが空で、本番オリジンからの認証要求が `403 INVALID_ORIGIN` で拒否されていた。
+- 修正: Neon Consoleのmainブランチで `https://mania-market-v1.vercel.app` を信頼済みドメインに登録した。
+- 確認: 本番のログインAPIが `INVALID_ORIGIN` ではなく通常の認証結果を返し、登録APIも通常の入力検証まで到達することを確認した。
+- 併発事項: 同じGitHubリポジトリが `mania-market-v1` と `mania-market-v1-7nnf` の2つへデプロイされていた。後者はDB/Auth環境変数が未設定。
+- 再発防止: 未設定の複製ドメインへのアクセスは `proxy.ts` で正常な本番ドメインへ恒久転送する。公開・QR・営業素材には正常な本番URLだけを使用する。
