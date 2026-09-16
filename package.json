@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "stripe:setup": "node scripts/stripe-setup.mjs"
+    "stripe:setup": "node scripts/stripe-setup.mjs",
+    "auth:check": "node scripts/auth-smoke.mjs"
   },
   "dependencies": {
     "@neondatabase/auth": "^0.4.2-beta",

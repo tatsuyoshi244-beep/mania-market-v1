@@ -26,15 +26,9 @@ import { enforceRateLimit } from "@/lib/security/rate-limit";
 import { verifyTurnstileToken } from "@/lib/security/turnstile";
 import { recordAnalyticsEvent } from "@/lib/analytics";
 import { getNeonAuth } from "@/lib/neon/auth";
+import { classifyAuthError } from "@/lib/neon/auth-error";
 import { queryOne, queryRows } from "@/lib/neon/db";
 import { safeInternalRoute } from "@/lib/navigation";
-
-function authErrorCode(error: unknown, fallback: "auth" | "signup") {
-  const message = error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
-  if (/(already|exist|registered|duplicate|既に|登録済)/i.test(message)) return "account_exists";
-  if (/(invalid|credential|password|メール|パスワード|認証)/i.test(message)) return fallback;
-  return "auth_unavailable";
-}
 
 function authErrorRedirect(redirectTo: string, code: string, mode: "signin" | "signup") {
   const path = redirectTo === "/admin" ? "/admin/login" : mode === "signup" ? "/signup" : "/login";
@@ -130,7 +124,7 @@ export async function signIn(formData: FormData) {
   }
   if (authError) {
     logServerError("signIn", authError);
-    redirect(authErrorRedirect(redirectTo, authErrorCode(authError, "auth"), "signin") as Route);
+    redirect(authErrorRedirect(redirectTo, classifyAuthError(authError, "auth"), "signin") as Route);
   }
   redirect(redirectTo);
 }
@@ -155,7 +149,7 @@ export async function signUp(formData: FormData) {
   }
   if (authError) {
     logServerError("signUp", authError);
-    redirect(authErrorRedirect(redirectTo, authErrorCode(authError, "signup"), "signup") as Route);
+    redirect(authErrorRedirect(redirectTo, classifyAuthError(authError, "signup"), "signup") as Route);
   }
   redirect(redirectTo);
 }

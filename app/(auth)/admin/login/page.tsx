@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { AuthCard } from "@/components/auth-card";
 import { safeInternalRoute } from "@/lib/navigation";
+import { authErrorMessage } from "@/lib/neon/auth-error";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "管理者ログイン", robots: { index: false, follow: false } };
@@ -8,11 +9,7 @@ export const metadata: Metadata = { title: "管理者ログイン", robots: { in
 export default async function AdminLoginPage({ searchParams }: { searchParams: Promise<{ next?: string; error?: string }> }) {
   const { next, error } = await searchParams;
   const redirectTo = safeInternalRoute(next, "/admin");
-  const message = error === "account_exists"
-    ? "このメールアドレスは登録済みです。管理者アカウントでログインしてください。"
-    : error
-      ? "管理者ログインに失敗しました。認証情報を確認してください。"
-      : undefined;
+  const message = authErrorMessage(error, "admin");
 
   return (
     <div className="px-4 py-10">
