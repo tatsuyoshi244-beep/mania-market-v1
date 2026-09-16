@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import type { Route } from "next";
 import { getNeonAuth } from "@/lib/neon/auth";
+import { isOwnerAdminEmail } from "@/lib/admin-identity";
 import { queryOne } from "@/lib/neon/db";
 import type { AuthUser, AuthenticatedSession, SellerSession } from "@/types/auth";
 import type { User } from "@/types/database";
@@ -41,13 +42,20 @@ export async function requireSellerSession(redirectTo: Route = "/dashboard"): Pr
 }
 
 export async function ensureAppUser(authUser: AuthUser) {
+  const isOwnerAdmin = isOwnerAdminEmail(authUser.email);
   const user = await queryOne<User>(
-    `insert into public.users (id, email, display_name)
-     values ($1, $2, $3)
+    `insert into public.users (id, email, display_name, role)
+     values ($1, $2, $3,
+       case when $4::boolean then 'admin'::public.user_role else 'buyer'::public.user_role end)
      on conflict (id) do update set email = excluded.email,
-       display_name = coalesce(public.users.display_name, excluded.display_name), updated_at = now()
+       display_name = coalesce(public.users.display_name, excluded.display_name),
+       role = case
+         when $4::boolean then 'admin'::public.user_role
+         else public.users.role
+       end,
+       updated_at = now()
      returning *`,
-    [authUser.id, authUser.email, authUser.name ?? authUser.email.split("@")[0]]
+    [authUser.id, authUser.email, authUser.name ?? authUser.email.split("@")[0], isOwnerAdmin]
   );
   if (!user) throw new Error("ユーザー情報を作成できませんでした。");
   return user;
