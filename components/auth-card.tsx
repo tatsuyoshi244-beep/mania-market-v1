@@ -52,7 +52,7 @@ export function AuthCard({
               maxLength={80}
               autoComplete="name"
               className="rounded-md border border-ink/15 bg-white px-3 py-2 dark:border-paper/15 dark:bg-ink/80"
-              placeholder="マニアマーケット太郎"
+              placeholder="価値 太郎"
             />
           </label>
         ) : null}

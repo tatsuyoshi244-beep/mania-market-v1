@@ -13,7 +13,7 @@ export default async function ConciergePage() {
   if (!user) {
     return (
       <div className="px-4 py-10">
-        <AuthCard next="/dashboard/concierge" title="Mania Concierge" description="ログインして AI 秘書を利用してください。" />
+        <AuthCard next="/dashboard/concierge" title="価値コンシェルジュ" description="ログインして AI 秘書を利用してください。" />
       </div>
     );
   }
@@ -27,7 +27,7 @@ export default async function ConciergePage() {
           <header>
             <p className="inline-flex items-center gap-2 rounded-full border border-ink/10 bg-white/60 px-3 py-1 text-[11px] font-bold tracking-[0.16em] text-ink/60 dark:border-paper/15 dark:bg-ink/50">
               <Sparkles className="size-3.5 text-cinnabar" />
-              MANIA CONCIERGE
+              VALUE CONCIERGE
             </p>
             <h1 className="mt-4 font-display text-4xl font-semibold sm:text-5xl">出店者向け AI 秘書</h1>
             <p className="mt-3 max-w-2xl text-sm leading-7 text-ink/65 dark:text-paper/65">

@@ -22,14 +22,14 @@ export const SELLER_STEPS = [
   {
     step: "05",
     title: "公開",
-    description: "準備ができたら「公開する」をオン。Mania Market に掲載されます。"
+    description: "準備ができたら「公開する」をオン。「好きは、価値になる。」に掲載されます。"
   }
 ] as const;
 
 export const SELLER_REQUIREMENTS = [
   {
-    title: "マニア向け専門店であること",
-    description: "ヴィンテージカメラ、レトロゲームなど、特定ジャンルに深いこだわりがあるショップを想定しています。"
+    title: "好きと専門性が伝わること",
+    description: "商品やサービスを選ぶ理由、詳しく語れる知識、店ならではのこだわりがあるショップや作り手を想定しています。"
   },
   {
     title: "公式サイトまたは販売ページがあること",
@@ -41,7 +41,7 @@ export const SELLER_REQUIREMENTS = [
   },
   {
     title: "日本国内からの運営（推奨）",
-    description: "国内のマニアコミュニティ向けの発見プラットフォームとして設計されています。"
+    description: "国内のショップや作り手と、価値ある商品を探す人をつなぐ発見サイトとして設計されています。"
   }
 ] as const;
 
@@ -57,7 +57,7 @@ export const SELLER_PROHIBITED = [
 export const TERMS_SUMMARY = [
   {
     title: "プラットフォームの役割",
-    body: "Mania Market は発見・キュレーションの場です。サイト内での決済・購入保証・返品対応は行いません。"
+    body: "「好きは、価値になる。」は発見と紹介の場です。サイト内での決済・購入保証・返品対応は行いません。"
   },
   {
     title: "購入と取引",

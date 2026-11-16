@@ -4,7 +4,7 @@ import { listCategories } from "@/lib/categories";
 import { requireDashboardAccess } from "@/lib/dashboard/access";
 import { queryRows } from "@/lib/neon/db";
 
-export const metadata = { title: "ショップ編集 — Mania Market" };
+export const metadata = { title: "ショップ編集｜好きは、価値になる。" };
 
 export default async function DashboardShopPage() {
   const access = await requireDashboardAccess("/dashboard/shop");

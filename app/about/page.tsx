@@ -3,8 +3,8 @@ import { ArrowRight, Compass, Globe2, ShieldCheck, Store } from "lucide-react";
 import { SiteFooter } from "@/components/site-footer";
 
 export const metadata = {
-  title: "Mania Marketとは — Mania Market",
-  description: "Mania Marketの役割、掲載ジャンル、ショップ運営、購入の流れをご案内します。"
+  title: "私たちについて｜好きは、価値になる。",
+  description: "「好きは、価値になる。」が大切にする思い、掲載ジャンル、ショップ運営、購入の流れをご案内します。"
 };
 
 const PRINCIPLES = [
@@ -21,7 +21,7 @@ const PRINCIPLES = [
   {
     icon: Globe2,
     title: "購入は各ショップで",
-    body: "Mania Market内では決済を行いません。気になった商品は掲載ショップの公式サイトへ移動して購入します。"
+    body: "サイト内では決済を行いません。気になった商品は掲載ショップの公式サイトへ移動して購入します。"
   },
   {
     icon: ShieldCheck,
@@ -36,15 +36,15 @@ export default function AboutPage() {
       <section className="relative overflow-hidden border-b border-ink/10 dark:border-paper/10">
         <div className="lp-mesh absolute inset-0" />
         <div className="relative mx-auto max-w-6xl px-4 py-16 sm:py-24">
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-cinnabar">About Mania Market</p>
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-cinnabar">私たちについて</p>
           <h1 className="mt-5 max-w-3xl font-display text-5xl font-semibold leading-tight sm:text-7xl">
-            欲しいものではなく、
+            好きから始まり、
             <br />
-            知らなかった世界に出会う。
+            価値へつながる場所をつくる。
           </h1>
           <p className="mt-7 max-w-2xl text-base leading-8 text-ink/70 dark:text-paper/70 sm:text-lg">
-            Mania Marketは、熱量の高い専門店と商品を見つけるための発見プラットフォームです。
-            店舗や作品の背景まで眺め、気になったらそのショップへ訪れる。発見と送客に集中します。
+            「好きは、価値になる。」は、好きなことを掘り下げ、知識とこだわりを仕事にした店や作り手のための発見サイトです。
+            商品の背景や選ぶ理由まで知り、気になったらそのショップへ訪れる。売る前に、価値が伝わる場所をつくります。
           </p>
           <div className="mt-9 flex flex-wrap gap-3">
             <Link href="/categories" className="inline-flex items-center gap-2 rounded-full bg-ink px-6 py-3.5 text-sm font-bold text-white hover:bg-lagoon dark:bg-lagoon">
@@ -59,7 +59,7 @@ export default function AboutPage() {
 
       <section className="mx-auto max-w-6xl px-4 py-16 sm:py-20">
         <p className="text-xs font-bold uppercase tracking-[0.2em] text-cinnabar">How it works</p>
-        <h2 className="mt-3 font-display text-4xl font-semibold sm:text-5xl">Mania Marketの役割</h2>
+        <h2 className="mt-3 font-display text-4xl font-semibold sm:text-5xl">「好きは、価値になる。」の役割</h2>
         <div className="mt-10 grid gap-5 sm:grid-cols-2">
           {PRINCIPLES.map((item) => (
             <article key={item.title} className="rounded-3xl border border-ink/10 bg-white/80 p-6 shadow-sm dark:border-paper/10 dark:bg-ink/50 sm:p-8">

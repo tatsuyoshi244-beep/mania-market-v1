@@ -9,7 +9,7 @@ import { getAuthUser } from "@/lib/auth";
 import { requireAdminUser } from "@/lib/partner-applications/admin";
 
 export const metadata = {
-  title: "出店申請管理 — Mania Market Admin"
+  title: "出店申請管理｜好きは、価値になる。運営"
 };
 
 export default async function AdminPartnerApplicationsPage() {

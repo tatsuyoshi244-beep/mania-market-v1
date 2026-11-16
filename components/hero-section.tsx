@@ -24,22 +24,19 @@ export function HeroSection() {
           <div className="animate-fade-up">
             <p className="inline-flex items-center gap-2 rounded-full border border-ink/10 bg-white/55 px-4 py-1.5 text-[11px] font-bold tracking-[0.2em] text-ink/65 backdrop-blur dark:border-paper/15 dark:bg-ink/45 dark:text-paper/65">
               <Sparkles className="size-3.5 text-cinnabar" />
-              DISCOVERY PLATFORM
+              好きと価値の発見サイト
             </p>
 
-            <h1 className="mt-7 font-display text-[2rem] font-semibold leading-[1.45] tracking-tight sm:text-[2.35rem] lg:text-[2.65rem]">
-              <span className="block text-ink/55 dark:text-paper/55">欲しいものを探す場所ではない。</span>
-              <span className="mt-4 block">
-                知らなかった世界と、
-                <br />
-                熱量の高い専門店に出会う場所。
-              </span>
+            <h1 className="mt-7 font-display text-[2rem] font-semibold leading-[1.5] tracking-tight sm:text-[2.35rem] lg:text-[2.65rem]">
+              <span className="block">好きは、知識になる。</span>
+              <span className="block">知識は、仕事になる。</span>
+              <span className="mt-3 block text-cinnabar">こだわりは、商品の価値になる。</span>
             </h1>
 
             <p className="mt-6 max-w-md text-base leading-8 text-ink/65 dark:text-paper/65 sm:text-lg">
-              全国のマニア専門店を発見できる、
+              好きなことを掘り下げ、知識とこだわりを仕事にした店や作り手を紹介します。
               <br className="hidden sm:block" />
-              新しい検索インフラ。
+              商品の背景を知り、まだ知らなかった価値に出会える場所です。
             </p>
 
             <div className="mt-9 flex flex-wrap gap-3">

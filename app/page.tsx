@@ -128,7 +128,7 @@ export default async function HomePage() {
         <SectionHeader
           label="Genres"
           title="ジャンルから探す"
-          description="写真で世界観を感じながら、マニアの領域へ。"
+          description="写真と物語から、まだ知らなかったこだわりの世界へ。"
           href="/categories"
         />
         {categories.length === 0 ? (

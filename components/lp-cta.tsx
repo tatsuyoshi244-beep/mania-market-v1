@@ -10,10 +10,10 @@ export function LpCta() {
         <div className="relative max-w-2xl">
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/60">For Sellers</p>
           <h2 className="mt-3 font-display text-4xl font-semibold leading-tight sm:text-5xl">
-            あなたの専門店を、マニアに届けよう。
+            あなたの「好き」を、商品の価値に。
           </h2>
           <p className="mt-4 text-sm leading-7 text-white/80 sm:text-base">
-            無料プランから始められるショップ開設。商品掲載・ブランディング・外部販売リンクまで、ひとつのダッシュボードで。
+            知識やこだわりが伝わるショップページを、無料プランから。商品掲載・ブランディング・外部販売リンクまで、ひとつのダッシュボードで。
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link

@@ -6,7 +6,7 @@ import { getBillingSummary } from "@/lib/billing/queries";
 import { requireDashboardAccess } from "@/lib/dashboard/access";
 import { isDevelopment } from "@/lib/env";
 
-export const metadata = { title: "プラン管理 — Mania Market" };
+export const metadata = { title: "プラン管理｜好きは、価値になる。" };
 
 type BillingPageProps = {
   searchParams: Promise<{ success?: string; canceled?: string; error?: string }>;

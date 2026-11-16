@@ -4,7 +4,7 @@ import { PLANS } from "@/lib/plans";
 import { yen } from "@/lib/utils";
 
 const FEATURES: Record<string, string[]> = {
-  free: ["ショップ公開", "商品3件まで", "基本ブランディング", "Mania Concierge"],
+  free: ["ショップ公開", "商品3件まで", "基本ブランディング", "価値コンシェルジュ"],
   standard: ["商品30件まで", "優先サポート（予定）", "分析機能（予定）"],
   premium: ["商品無制限", "プレミアム表示（予定）", "広告枠（予定）"]
 };

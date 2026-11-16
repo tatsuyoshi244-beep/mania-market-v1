@@ -16,9 +16,9 @@ export function SiteFooter() {
     <footer className="border-t border-ink/10 bg-white/50 dark:border-paper/10 dark:bg-ink/40">
       <div className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-12 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="font-display text-3xl font-semibold">Mania Market</p>
+          <p className="font-display text-3xl font-semibold">好きは、価値になる。</p>
           <p className="mt-2 max-w-sm text-sm leading-7 text-ink/60 dark:text-paper/60">
-            マニア専門店の発見プラットフォーム。こだわりのショップとレアな商品を、美しくキュレーションします。
+            好きなことを掘り下げ、知識とこだわりを仕事にした店や作り手と、商品の背景にある価値を紹介します。
           </p>
         </div>
         <nav className="flex flex-wrap gap-x-6 gap-y-2 text-sm font-semibold">
@@ -30,7 +30,7 @@ export function SiteFooter() {
         </nav>
       </div>
       <div className="border-t border-ink/10 px-4 py-4 text-center text-xs text-ink/45 dark:border-paper/10 dark:text-paper/45">
-        © {new Date().getFullYear()} Mania Market
+        © {new Date().getFullYear()} 好きは、価値になる。
       </div>
     </footer>
   );

@@ -12,7 +12,7 @@ const SEASONAL_BY_MONTH: Record<number, SeasonalTrend[]> = {
   8: [{ title: "秋のヴィンテージファッション", description: "デザイナーヴィンテージの季節", tags: ["fashion", "designer", "autumn"] }],
   9: [{ title: "ハロウィン・レア物", description: "限定・希少アイテムの訴求", tags: ["rare", "limited", "halloween"] }],
   10: [{ title: "ブラックフライデー前", description: "外部サイトへの導線強化の好機", tags: ["sale", "deal", "vintage"] }],
-  11: [{ title: "年末ギフト", description: "マニア向けギフト・プレミアム商品", tags: ["gift", "premium", "collector"] }]
+  11: [{ title: "年末ギフト", description: "こだわりのギフト・プレミアム商品", tags: ["gift", "premium", "collector"] }]
 };
 
 const CATEGORY_RELATED: Record<string, string[]> = {

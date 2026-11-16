@@ -9,12 +9,12 @@ const STEPS = [
   {
     icon: Compass,
     title: "Discover",
-    description: "今日の発見、人気ショップ、マニアの専門店。知らなかった世界へ、偶然の出会いを届けます。"
+    description: "今日の発見、人気ショップ、こだわりの店。知らなかった世界へ、偶然の出会いを届けます。"
   },
   {
     icon: MapPin,
     title: "Visit",
-    description: "気になったらショップへ。購入は各店の公式サイトで。Mania Market は「発見」に特化したインフラです。"
+    description: "気になったらショップへ。購入は各店の公式サイトで。「好きは、価値になる。」は発見と理解をつなぎます。"
   }
 ] as const;
 
@@ -24,9 +24,9 @@ export function LpFeatures() {
       <div className="mx-auto max-w-6xl px-4 py-16 sm:py-20">
         <div className="max-w-2xl">
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-paper/50">Philosophy</p>
-          <h2 className="mt-3 font-display text-4xl font-semibold sm:text-5xl">探すより、出会う。</h2>
+          <h2 className="mt-3 font-display text-4xl font-semibold sm:text-5xl">価値は、背景を知ることで見えてくる。</h2>
           <p className="mt-4 text-sm leading-7 text-paper/65">
-            欲しいものを検索する場所ではなく、知らなかった専門店と出会うためのプラットフォーム。
+            作り手や店主の知識、選ぶ理由、積み重ねたこだわりまで知るための発見サイトです。
           </p>
         </div>
         <div className="mt-12 grid gap-6 md:grid-cols-3">

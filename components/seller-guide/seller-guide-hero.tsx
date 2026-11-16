@@ -16,7 +16,7 @@ export function SellerGuideHero() {
             <span className="mt-2 block text-cinnabar">誰かの発見に変える。</span>
           </h1>
           <p className="mt-8 max-w-xl text-base leading-8 text-ink/70 dark:text-paper/70 sm:text-lg">
-            Mania Market は、マニアの専門店と出会うための発見プラットフォーム。
+            「好きは、価値になる。」は、知識とこだわりを仕事にした店や作り手と出会うための発見サイト。
             出店の流れ・条件・プランを、このガイドでまとめて確認できます。
           </p>
           <div className="mt-10 flex flex-wrap gap-3">
@@ -31,7 +31,7 @@ export function SellerGuideHero() {
               href="/dashboard/concierge"
               className="inline-flex items-center gap-2 rounded-full border border-ink/12 bg-white/65 px-6 py-3.5 text-sm font-bold backdrop-blur transition hover:border-cinnabar hover:text-cinnabar dark:border-paper/18 dark:bg-ink/45"
             >
-              Mania Concierge を見る
+              価値コンシェルジュを見る
             </Link>
           </div>
         </div>

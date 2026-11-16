@@ -3,7 +3,7 @@ import { summarizeAuditMetadata } from "@/lib/audit/log";
 import { queryRows } from "@/lib/neon/db";
 
 export const metadata = {
-  title: "監査ログ — Mania Market Admin"
+  title: "監査ログ｜好きは、価値になる。運営"
 };
 
 export default async function AdminAuditLogsPage() {

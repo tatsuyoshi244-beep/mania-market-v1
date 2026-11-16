@@ -3,7 +3,7 @@ import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { requireDashboardAccess } from "@/lib/dashboard/access";
 import { getShopAnalyticsSummary } from "@/lib/dashboard/analytics";
 
-export const metadata = { title: "アナリティクス — Mania Market" };
+export const metadata = { title: "アナリティクス｜好きは、価値になる。" };
 
 export default async function DashboardAnalyticsPage() {
   const access = await requireDashboardAccess("/dashboard/analytics");

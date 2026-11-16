@@ -5,7 +5,7 @@ import { ProductsManager } from "@/components/dashboard/products-manager";
 import { requireDashboardAccess } from "@/lib/dashboard/access";
 import { getProductLimitInfo, listSellerProducts } from "@/lib/products";
 
-export const metadata = { title: "商品管理 — Mania Market" };
+export const metadata = { title: "商品管理｜好きは、価値になる。" };
 
 export default async function DashboardProductsPage() {
   const access = await requireDashboardAccess("/dashboard/products");

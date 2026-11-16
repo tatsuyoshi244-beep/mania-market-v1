@@ -31,7 +31,7 @@ export function PartnerApplicationAiReview({ application }: PartnerApplicationAi
   if (application.ai_score === null || !application.ai_recommendation) {
     return (
       <section className="rounded-3xl border border-dashed border-ink/15 bg-ink/5 p-6 dark:border-paper/15 dark:bg-paper/5">
-        <p className="text-sm text-ink/55">Mania Review AI の評価はまだありません。</p>
+        <p className="text-sm text-ink/55">価値レビュー AI の評価はまだありません。</p>
       </section>
     );
   }
@@ -44,7 +44,7 @@ export function PartnerApplicationAiReview({ application }: PartnerApplicationAi
         <div>
           <p className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.16em] text-lagoon">
             <Sparkles className="size-4 text-cinnabar" />
-            Mania Review AI
+            価値レビュー AI
           </p>
           <h2 className="mt-2 font-display text-2xl font-semibold">AI一次審査</h2>
           {application.ai_checked_at ? (

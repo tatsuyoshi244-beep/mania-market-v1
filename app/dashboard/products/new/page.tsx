@@ -7,7 +7,7 @@ import { listCategories } from "@/lib/categories";
 import { requireOwnerDashboardAccess } from "@/lib/dashboard/access";
 import { getProductLimitInfo } from "@/lib/products";
 
-export const metadata = { title: "商品を登録 — Mania Market" };
+export const metadata = { title: "商品を登録｜好きは、価値になる。" };
 
 export default async function DashboardProductNewPage() {
   const access = await requireOwnerDashboardAccess("/dashboard/products/new");

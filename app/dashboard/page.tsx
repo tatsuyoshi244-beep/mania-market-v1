@@ -4,7 +4,7 @@ import { GettingStartedSteps } from "@/components/dashboard/getting-started-step
 import { requireDashboardAccess } from "@/lib/dashboard/access";
 import { getDashboardSummary } from "@/lib/dashboard/stats";
 
-export const metadata = { title: "運営サマリー — Mania Market" };
+export const metadata = { title: "運営サマリー｜好きは、価値になる。" };
 
 export default async function DashboardPage() {
   const access = await requireDashboardAccess("/dashboard");

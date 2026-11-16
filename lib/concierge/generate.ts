@@ -14,13 +14,13 @@ export type GenerateInput = {
 export function generateConciergeText(input: GenerateInput) {
   const { type, context, hints } = input;
   const shopName = context.shop?.name ?? "あなたのショップ";
-  const categories = context.shopCategoryNames.join("・") || "マニア向け専門";
+  const categories = context.shopCategoryNames.join("・") || "こだわりの専門分野";
   const keywords = hints?.keywords?.trim() || categories;
 
   switch (type) {
     case "shop_description":
       return {
-        draft: `${shopName}は、${categories}に特化した専門店です。${keywords}への深いこだわりを大切に、マニアの目線で厳選した一品を揃えています。知る人だけが辿り着く、熱量の高いセレクトショップとして、あなたの「好き」を応援します。購入は公式サイトよりお願いいたします。`,
+        draft: `${shopName}は、${categories}に特化した専門店です。${keywords}への深い知識とこだわりを大切に、理由を持って選んだ一品を揃えています。商品との出会いを通じて、あなたの「好き」がさらに深まる店を目指します。購入は公式サイトよりお願いいたします。`,
         model: "rule-v1"
       };
 
@@ -33,14 +33,14 @@ export function generateConciergeText(input: GenerateInput) {
       const productName = product?.name ?? hints?.productName ?? "こだわりの一品";
       const price = product?.price_label ? `（${product.price_label}）` : "";
       return {
-        draft: `【${productName}】${price}\n${keywords}好きにはたまらない、マニア目線で選んだアイテムです。状態・希少性・世界観を大切に、${shopName}がお届けします。詳細・ご購入は各ショップの公式ページからお願いいたします。`,
+        draft: `【${productName}】${price}\n${keywords}が好きな方へ。状態・希少性・つくられた背景まで確かめ、${shopName}が理由を持って選んだアイテムです。詳細・ご購入は各ショップの公式ページからお願いいたします。`,
         model: "rule-v1"
       };
     }
 
     case "sns_post":
       return {
-        draft: `📍 ${shopName}\n\n${categories}が好きな方へ。\n${keywords}の世界観を、Mania Market でも発見できます。\n\n▶ プロフィールのリンクからチェック\n#mania #${keywords.replace(/\s+/g, "")} #マニア`,
+        draft: `📍 ${shopName}\n\n${categories}が好きな方へ。\n${keywords}の背景と価値を、「好きは、価値になる。」で発見できます。\n\n▶ プロフィールのリンクからチェック\n#好きは価値になる #${keywords.replace(/\s+/g, "")} #こだわり`,
         model: "rule-v1"
       };
 
@@ -48,7 +48,7 @@ export function generateConciergeText(input: GenerateInput) {
       return {
         draft: [
           `${keywords}、ここから。`,
-          `マニアのための${categories}、${shopName}`,
+          `${categories}へのこだわりを届ける、${shopName}`,
           `知る人だけが辿り着く、${shopName}`
         ].join("\n"),
         model: "rule-v1"

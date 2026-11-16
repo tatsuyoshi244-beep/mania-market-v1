@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ArrowRight, CheckCircle2 } from "lucide-react";
 
 export const metadata = {
-  title: "申請完了 — Mania Market",
+  title: "申請完了｜好きは、価値になる。",
   description: "出店申請を受け付けました"
 };
 

@@ -173,10 +173,10 @@ function buildAiComment(
 ) {
   const parts: string[] = [];
 
-  parts.push(`【Mania Review AI】${input.shop_name} の一次審査結果です。`);
+  parts.push(`【価値レビュー AI】${input.shop_name} の一次審査結果です。`);
 
   if (scores.ai_specialty >= 18) {
-    parts.push("専門性: カテゴリと説明文から、マニア向け専門店としての姿勢が読み取れます。");
+    parts.push("専門性: カテゴリと説明文から、知識とこだわりを持つ専門店としての姿勢が読み取れます。");
   } else if (scores.ai_specialty >= 12) {
     parts.push("専門性: 一定の専門性はありますが、扱う領域の具体性をさらに補強すると良いです。");
   } else {
@@ -192,7 +192,7 @@ function buildAiComment(
   if (scores.ai_passion >= 18) {
     parts.push("熱量: テキストから運営者の熱量が十分に伝わります。");
   } else {
-    parts.push("熱量: 想いや説明をもう少し具体的にすると、マニアへの訴求力が上がります。");
+    parts.push("熱量: 想いや説明をもう少し具体的にすると、商品の価値がより伝わりやすくなります。");
   }
 
   if (scores.ai_safety >= 20) {

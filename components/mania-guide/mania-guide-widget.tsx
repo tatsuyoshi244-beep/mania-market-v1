@@ -11,7 +11,7 @@ const WELCOME_MESSAGE: GuideChatMessage = {
   id: "welcome",
   role: "assistant",
   content:
-    "こんにちは、Mania Guide です。\n興味のあるジャンルやキーワードを教えてください。カテゴリ・ショップ・商品の発見をお手伝いします。",
+    "こんにちは、価値ガイドです。\n興味のあるジャンルやキーワードを教えてください。カテゴリ・ショップ・商品の発見をお手伝いします。",
   disclaimer: EXTERNAL_PURCHASE_DISCLAIMER
 };
 
@@ -115,7 +115,7 @@ export function ManiaGuideWidget() {
           <div
             className="flex h-[min(78vh,560px)] w-[min(92vw,400px)] flex-col overflow-hidden rounded-3xl border border-ink/10 bg-paper shadow-editorial dark:border-paper/10 dark:bg-ink"
             role="dialog"
-            aria-label="Mania Guide"
+            aria-label="価値ガイド"
           >
             <header className="flex items-center justify-between gap-3 border-b border-ink/8 px-4 py-3 dark:border-paper/10">
               <div className="flex items-center gap-2">
@@ -123,7 +123,7 @@ export function ManiaGuideWidget() {
                   <Sparkles className="size-4" />
                 </div>
                 <div>
-                  <p className="text-sm font-bold">Mania Guide</p>
+                  <p className="text-sm font-bold">価値ガイド</p>
                   <p className="text-[10px] text-ink/50 dark:text-paper/50">発見のお手伝い</p>
                 </div>
               </div>
@@ -221,10 +221,10 @@ export function ManiaGuideWidget() {
           onClick={() => setOpen((value) => !value)}
           className="inline-flex items-center gap-2 rounded-full bg-ink px-4 py-3 text-sm font-bold text-white shadow-editorial transition hover:bg-lagoon dark:bg-lagoon dark:hover:bg-cinnabar"
           aria-expanded={open}
-          aria-label={open ? "Mania Guide を閉じる" : "Mania Guide を開く"}
+          aria-label={open ? "価値ガイドを閉じる" : "価値ガイドを開く"}
         >
           {open ? <X className="size-5" /> : <MessageCircle className="size-5" />}
-          <span className="hidden sm:inline">Mania Guide</span>
+          <span className="hidden sm:inline">価値ガイド</span>
         </button>
       </div>
     </>

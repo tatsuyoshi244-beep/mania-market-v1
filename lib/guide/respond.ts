@@ -1,7 +1,7 @@
 import type { GuideChatResponse, GuideRecommendations } from "@/types/guide";
 
 export const EXTERNAL_PURCHASE_DISCLAIMER =
-  "Mania Market では商品の購入・決済は行いません。気になる商品は各ショップの公式サイトでご購入ください。サイト内での購入保証や返品対応はありません。";
+  "「好きは、価値になる。」では商品の購入・決済は行いません。気になる商品は各ショップの公式サイトでご購入ください。サイト内での購入保証や返品対応はありません。";
 
 export function buildGuideResponse(query: string, recommendations: GuideRecommendations): GuideChatResponse {
   const { categories, shops, products } = recommendations;
@@ -28,7 +28,7 @@ export function buildGuideResponse(query: string, recommendations: GuideRecommen
     message =
       "まだデータが少ないようです。ジャンル一覧から眺めてみるのもおすすめです。興味のあるキーワード（例：フィルムカメラ、レトロゲーム）をもう少し具体的に教えてください。";
   } else {
-    message = `「${query}」について、Mania Market 内で見つけた発見候補です。\n\n${parts.join("\n\n")}`;
+    message = `「${query}」について、「好きは、価値になる。」で見つけた発見候補です。\n\n${parts.join("\n\n")}`;
   }
 
   message += `\n\n※ 購入は各ショップの外部サイトで行われます。`;

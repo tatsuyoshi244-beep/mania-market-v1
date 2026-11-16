@@ -33,7 +33,7 @@ export function ApplicationCard({ application, userEmail, userId }: ApplicationC
 
       {application.ai_score !== null ? (
         <div className="mt-4 rounded-xl border border-lagoon/20 bg-lagoon/8 p-4">
-          <p className="text-xs font-bold uppercase tracking-wider text-lagoon">Mania Review AI</p>
+          <p className="text-xs font-bold uppercase tracking-wider text-lagoon">価値レビュー AI</p>
           <p className="mt-1 text-lg font-bold">
             {application.ai_score}点 · {application.ai_recommendation}
           </p>

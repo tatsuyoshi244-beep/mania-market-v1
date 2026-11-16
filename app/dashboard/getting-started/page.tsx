@@ -4,7 +4,7 @@ import { getShopStats } from "@/lib/dashboard/stats";
 import { requireDashboardAccess } from "@/lib/dashboard/access";
 import { getProductLimitInfo } from "@/lib/products";
 
-export const metadata = { title: "運営ガイド — Mania Market" };
+export const metadata = { title: "運営ガイド｜好きは、価値になる。" };
 
 export default async function DashboardGettingStartedPage() {
   const access = await requireDashboardAccess("/dashboard/getting-started");

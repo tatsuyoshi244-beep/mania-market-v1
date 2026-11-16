@@ -7,7 +7,7 @@ import {
 import { getAuthUser } from "@/lib/auth";
 
 export const metadata = {
-  title: "出店申請状況 — Mania Market"
+  title: "出店申請状況｜好きは、価値になる。"
 };
 
 export default async function MypageApplicationsPage() {

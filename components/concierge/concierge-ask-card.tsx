@@ -13,7 +13,7 @@ export function ConciergeAskCard() {
   const [messages, setMessages] = useState<AskMessage[]>([
     {
       role: "assistant",
-      content: "Mania Concierge です。出店・商品・SNS・完成度について何でも聞いてください。"
+      content: "価値コンシェルジュです。出店・商品・SNS・完成度について何でも聞いてください。"
     }
   ]);
 

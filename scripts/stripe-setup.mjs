@@ -1,12 +1,12 @@
 /**
- * Stripe Product / Price setup for Mania Market
+ * Stripe Product / Price setup for 好きは、価値になる。
  *
  * Usage:
  *   STRIPE_SECRET_KEY=sk_test_... node scripts/stripe-setup.mjs
  *
  * Creates:
- *   - Product: Mania Market Standard
- *   - Product: Mania Market Premium
+ *   - Product: 好きは、価値になる。Standard
+ *   - Product: 好きは、価値になる。Premium
  *   - Price: standard_monthly (980 JPY / month)
  *   - Price: premium_monthly (2980 JPY / month)
  */
@@ -47,8 +47,8 @@ async function ensureMonthlyPrice(productId, lookupKey, amountYen) {
 }
 
 async function main() {
-  const standardProduct = await ensureProduct("Mania Market Standard", "standard");
-  const premiumProduct = await ensureProduct("Mania Market Premium", "premium");
+  const standardProduct = await ensureProduct("好きは、価値になる。Standard", "standard");
+  const premiumProduct = await ensureProduct("好きは、価値になる。Premium", "premium");
 
   const standardPrice = await ensureMonthlyPrice(standardProduct.id, "standard_monthly", 980);
   const premiumPrice = await ensureMonthlyPrice(premiumProduct.id, "premium_monthly", 2980);

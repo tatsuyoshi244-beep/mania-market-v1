@@ -23,8 +23,8 @@ import {
 } from "@/lib/seller-guide-content";
 
 export const metadata = {
-  title: "出店ガイド — Mania Market",
-  description: "Mania Market への出店方法・条件・プラン・利用規約の要約。マニア専門店の出店を安心して始められます。"
+  title: "出店ガイド｜好きは、価値になる。",
+  description: "「好きは、価値になる。」への出店方法・条件・プラン・利用規約の要約。知識とこだわりを伝えるショップを始められます。"
 };
 
 export default function SellerGuidePage() {
@@ -34,8 +34,8 @@ export default function SellerGuidePage() {
 
       <SellerGuideSection
         label="About"
-        title="Mania Market とは"
-        description="欲しいものを探す場所ではなく、知らなかった専門店と出会うための発見プラットフォームです。"
+        title="「好きは、価値になる。」とは"
+        description="商品だけでなく、その背景にある知識やこだわりまで伝え、まだ知らなかった価値と出会うための発見サイトです。"
       >
         <div className="grid gap-5 md:grid-cols-3">
           {[
@@ -46,13 +46,13 @@ export default function SellerGuidePage() {
             },
             {
               icon: Store,
-              title: "マニア専門店の場",
+              title: "好きを仕事にした人の場",
               body: "ヴィンテージ、クラフト、音楽、食だけでなく、WebサービスやAIツールなどオンラインの専門サービスも掲載できます。"
             },
             {
               icon: Globe,
               title: "購入は外部サイト",
-              body: "Mania Market では決済しません。気になったら各ショップの公式サイトへ。発見とキュレーションに集中します。"
+              body: "サイト内では決済しません。気になったら各ショップの公式サイトへ。発見と価値の紹介に集中します。"
             }
           ].map((item) => (
             <article
@@ -144,7 +144,7 @@ export default function SellerGuidePage() {
 
       <SellerGuideSection
         label="Concierge"
-        title="Mania Concierge"
+        title="価値コンシェルジュ"
         description="出店者向け AI 秘書。ショップの完成度診断、文章生成、今日のタスクをサポートします。"
       >
         <div className="grid items-center gap-8 rounded-3xl border border-ink/10 bg-gradient-to-br from-lagoon/10 via-white to-moss/10 p-8 shadow-sm dark:border-paper/10 dark:from-lagoon/20 dark:via-ink/50 dark:to-moss/15 sm:p-10 lg:grid-cols-[1fr_auto]">
@@ -210,7 +210,7 @@ export default function SellerGuidePage() {
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/60">Ready?</p>
             <h2 className="mt-3 font-display text-4xl font-semibold sm:text-5xl">さあ、あなたの専門店を。</h2>
             <p className="mt-4 text-sm leading-7 text-white/80 sm:text-base">
-              無料プランから今すぐ始められます。わからないことは Mania Concierge に相談してください。
+              無料プランから今すぐ始められます。わからないことは価値コンシェルジュに相談してください。
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
