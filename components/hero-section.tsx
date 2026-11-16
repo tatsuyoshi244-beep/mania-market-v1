@@ -27,10 +27,12 @@ export function HeroSection() {
               好きと価値の発見サイト
             </p>
 
-            <h1 className="mt-7 font-display text-[2rem] font-semibold leading-[1.5] tracking-tight sm:text-[2.35rem] lg:text-[2.65rem]">
+            <h1 className="mt-7 font-display text-[2rem] font-semibold leading-[1.5] tracking-tight sm:text-[2.25rem] lg:text-[2.4rem]">
               <span className="block">好きは、知識になる。</span>
               <span className="block">知識は、仕事になる。</span>
-              <span className="mt-3 block text-cinnabar">こだわりは、商品の価値になる。</span>
+              <span className="mt-3 block text-[1.8rem] text-cinnabar sm:text-[2.1rem] lg:whitespace-nowrap lg:text-[2.25rem]">
+                こだわりは、商品の価値になる。
+              </span>
             </h1>
 
             <p className="mt-6 max-w-md text-base leading-8 text-ink/65 dark:text-paper/65 sm:text-lg">
